@@ -6,6 +6,23 @@
     <title>Register</title>
 </head>
 <body>
-    <p>Register page</p>
+    <h2>Sign-up page</h2>
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p style="color: green;">{{ success }}</p>
+    {% endif %}
+    <form method="POST">
+        <label for="username">Create a Username:</label><br>
+        <input type="text" id="username" name="username" required><br><br>
+
+        <label for="password">Create a Password:</label><br>
+        <input type="password" id="password" name="password" required><br><br>
+
+        <input type="submit" value="Sign-up">
+    </form>
+    <br>
+    <a href="{{ url_for('login') }}">Login</a><br>
 </body>
 </html>

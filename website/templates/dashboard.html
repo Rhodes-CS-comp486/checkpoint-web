@@ -4,8 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <p>Dashboard page</p>
+    <p>Equipment Dashboard</p>
+
+    <table border="1">
+        <thread>
+            <tr>
+                <th>Equipment Type</th>
+                <th>Description</th>
+                <th>Availability</th>
+                <th>Quantity</th>
+            </tr>
+        </thread>
+        <tbody>
+            {% for item in equipment %}
+                <tr>
+                    <td>{{ item.type }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.availability }}</td>
+                    <td>{{ item.quality }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <canvas id="equipmentChart" width="400" height="200"></canvas>
+
+    <script>
+        const labels = [];
+        const qualityData = [];
+        const availabilityData = [];
+
+    const equipmentData = {
+        labels: labels,
+        datasets: [{
+            label: 'Equipment Quality (out of 10)',
+            data: qualityData,
+            backgroundColor: ['blue', 'green', 'orange', 'red', 'purple']
+        }]
+    };
+
+        const config = {
+            type: 'bar',
+            data: equipmentData,
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        };
+        
+        new Chart(document.getElementById('equipmentChart'), config);
+    </script>
+    <br>
+    <a href="{{ url_for('home') }}">Logout</a>
 </body>
 </html>
