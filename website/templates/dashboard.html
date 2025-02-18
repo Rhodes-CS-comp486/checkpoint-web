@@ -8,7 +8,7 @@
 </head>
 <body>
     <p>Equipment Dashboard</p>
-
+    
     <table border="1">
         <thread>
             <tr>
@@ -33,34 +33,23 @@
     <canvas id="equipmentChart" width="400" height="200"></canvas>
 
     <script>
-        const labels = [];
-        const qualityData = [];
-        const availabilityData = [];
+        fetch("/api/equipment")
+            .then(response => response.json())
+            .then(data => {
+                const labels = data.map(item => item.type);
+                const qualityData = data.map(item => parseInt(item.quality));
+                const chartData = {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Equipment Quality (out of 10)',
+                        data: qualityData,
+                        backgroundColor: ['blue', 'green', 'orange', 'red', 'purple']
+                    }]
+                };
+            new Chart(document.getElementById('equipmentChart'), config);
 
-    const equipmentData = {
-        labels: labels,
-        datasets: [{
-            label: 'Equipment Quality (out of 10)',
-            data: qualityData,
-            backgroundColor: ['blue', 'green', 'orange', 'red', 'purple']
-        }]
-    };
-
-        const config = {
-            type: 'bar',
-            data: equipmentData,
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
-                    }
-                }
-            }
-        };
-        
-        new Chart(document.getElementById('equipmentChart'), config);
+        })
+        .catch(error => console.error("Error fetching equipment data:", error));
     </script>
     <br>
     <a href="{{ url_for('home') }}">Logout</a>

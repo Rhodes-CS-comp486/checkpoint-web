@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify 
 
 app = Flask(__name__)
 
@@ -10,9 +10,9 @@ login_database = {
 
 # sample equipment data
 equipment_database = [
-    {'type': 'computer1', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10/10'},
-    {'type': 'computer2', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10/10'},
-    {'type': 'computer3', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10/10'},
+    {'type': 'computer1', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10'},
+    {'type': 'computer2', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '9'},
+    {'type': 'computer3', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '8'},
 ]
 
 @app.route('/')
@@ -47,6 +47,10 @@ def login():
 @app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html', equipment=equipment_database)
+
+@app.route('/api/equipment')
+def get_equipment():
+    return jsonify(equipment_database)
     
 if __name__ == '__main__':
     app.run(debug=True)
