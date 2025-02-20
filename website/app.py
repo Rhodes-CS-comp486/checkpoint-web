@@ -9,11 +9,11 @@ login_database = {
 }
 
 # sample equipment data
-equipment_database = {
-    {'type': 'computer1', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10/10'},
-    {'type': 'computer2', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10/10'},
-    {'type': 'computer3', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10/10'},
-}
+equipment_database = [
+    {'type': 'computer1', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10'},
+    {'type': 'computer2', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '9'},
+    {'type': 'computer3', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '8'},
+]
 
 @app.route('/')
 def home():
