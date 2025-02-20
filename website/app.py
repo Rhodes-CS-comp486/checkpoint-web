@@ -10,9 +10,9 @@ login_database = {
 
 # sample equipment data
 equipment_database = [
-    {'type': 'computer1', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10'},
-    {'type': 'computer2', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '9'},
-    {'type': 'computer3', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '8'},
+    {'type': 'computer1', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10/10'},
+    {'type': 'computer2', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10/10'},
+    {'type': 'computer3', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10/10'},
 ]
 
 @app.route('/')
@@ -39,7 +39,7 @@ def login():
         password = request.form.get('password')
         user = login_database.get(username)
         if user and user['password'] == password:
-            return render_template('dashboard.html', username=username)
+            return render_template('dashboard.html', username=username, equipment=equipment_DB)
         else:
             return render_template('login.html', error='Invalid credentials')
     return render_template('login.html')
@@ -47,10 +47,6 @@ def login():
 @app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html', equipment=equipment_database)
-
-@app.route('/api/equipment')
-def get_equipment():
-    return jsonify(equipment_database)
     
 if __name__ == '__main__':
     app.run(debug=True)
