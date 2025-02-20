@@ -41,7 +41,7 @@
     </style>
 </head>
 <body>
-    <p>Equipment Dashboard</p>
+    <h2>Equipment Dashboard</h2>
 
     <table border="1">
         <thread>
@@ -69,39 +69,6 @@
             {% endif %}    
         </tbody>
     </table>
-
-    <canvas id="equipmentChart" width="400" height="200"></canvas>
-
-    <script>
-        const labels = [];
-        const qualityData = [];
-        const availabilityData = [];
-
-    const equipmentData = {
-        labels: labels,
-        datasets: [{
-            label: 'Equipment Quality (out of 10)',
-            data: qualityData,
-            backgroundColor: ['blue', 'green', 'orange', 'red', 'purple']
-        }]
-    };
-
-        const config = {
-            type: 'bar',
-            data: equipmentData,
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
-                    }
-                }
-            }
-        };
-        
-        new Chart(document.getElementById('equipmentChart'), config);
-    </script>
     <br>
     <a href="{{ url_for('home') }}">Logout</a>
 </body>
