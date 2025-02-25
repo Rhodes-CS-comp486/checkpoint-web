@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify 
 
 app = Flask(__name__)
 
@@ -10,9 +10,9 @@ login_database = {
 
 # sample equipment data
 equipment_database = [
-    {'type': 'computer1', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10/10'},
-    {'type': 'computer2', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10/10'},
-    {'type': 'computer3', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10/10'},
+    {'type': 'computer1', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10'},
+    {'type': 'computer2', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '9'},
+    {'type': 'computer3', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '8'},
 ]
 
 @app.route('/')
@@ -39,7 +39,7 @@ def login():
         password = request.form.get('password')
         user = login_database.get(username)
         if user and user['password'] == password:
-            return render_template('dashboard.html', username=username)
+            return render_template('dashboard.html', username=username, equipment=equipment_database)
         else:
             return render_template('login.html', error='Invalid credentials')
     return render_template('login.html')

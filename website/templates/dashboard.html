@@ -5,9 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style> 
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 20px;
+        }
+        th, td {
+            border: 2px solid black;
+            padding: 15px;
+            text-align: left;
+            font-size: 22px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        a{
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 20px;
+            text-decoration: none;
+            color: blue;
+        }
+        a:hover{
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <p>Equipment Dashboard</p>
+    <h2>Equipment Dashboard</h2>
 
     <table border="1">
         <thread>
@@ -19,49 +53,22 @@
             </tr>
         </thread>
         <tbody>
-            {% for item in equipment %}
+            {% if equipment %}
+                {% for item in equipment %}
+                    <tr>
+                        <td>{{ item.type }}</td>
+                        <td>{{ item.description }}</td>
+                        <td>{{ item.availability }}</td>
+                        <td>{{ item.quality }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
                 <tr>
-                    <td>{{ item.type }}</td>
-                    <td>{{ item.description }}</td>
-                    <td>{{ item.availability }}</td>
-                    <td>{{ item.quality }}</td>
+                    <td colspan="4">No equipment available</td>
                 </tr>
-            {% endfor %}
+            {% endif %}    
         </tbody>
     </table>
-
-    <canvas id="equipmentChart" width="400" height="200"></canvas>
-
-    <script>
-        const labels = [];
-        const qualityData = [];
-        const availabilityData = [];
-
-    const equipmentData = {
-        labels: labels,
-        datasets: [{
-            label: 'Equipment Quality (out of 10)',
-            data: qualityData,
-            backgroundColor: ['blue', 'green', 'orange', 'red', 'purple']
-        }]
-    };
-
-        const config = {
-            type: 'bar',
-            data: equipmentData,
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
-                    }
-                }
-            }
-        };
-        
-        new Chart(document.getElementById('equipmentChart'), config);
-    </script>
     <br>
     <a href="{{ url_for('home') }}">Logout</a>
 </body>
