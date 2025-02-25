@@ -60,6 +60,9 @@
                         <td>{{ item.description }}</td>
                         <td>{{ item.availability }}</td>
                         <td>{{ item.quality }}</td>
+                        <td>
+                            <a href="{{ url_for('remove_equipment', type=item.type) }}" style="color: red; text-decoration: none;">Remove</a>
+                        </td>
                     </tr>
                 {% endfor %}
             {% else %}
@@ -70,6 +73,7 @@
         </tbody>
     </table>
     <br>
+    <a href="{{ url_for('add_equipment') }}">Add Equipment</a>
     <a href="{{ url_for('home') }}">Logout</a>
 </body>
 </html>

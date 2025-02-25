@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Equipment</title>
+</head>
+<body>
+    <h2>Add Equipment</h2>
+    <form action="{{ url_for('add_equipment') }}" method="POST">
+        <input type="text" name="type" placeholder="Equipment Type" required>
+        <input type="text" name="description" placeholder="Description" required>
+        <select name="availability">
+            <option value="available">Available</option>
+            <option value="not available">Not Available</option>
+        </select>
+        <input type="number" name="quality" placeholder="Quality (1-10)" required min="1" max="10">
+        <button type="submit">Add Equipment</button>
+    </form>
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+</body>
+</html>

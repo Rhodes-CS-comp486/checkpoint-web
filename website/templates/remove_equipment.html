@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Equipment</title>
+</head>
+<body>
+    <h2>Remove Equipment</h2>
+    <form action="{{ url_for('remove_equipment') }}" method="POST">
+        <label for="id">Select Equipment to Remove:</label>
+        <select name="id" required>
+            {% for item in equipment %}
+                <option value="{{ item.id }}" {% if request.args.get('id') == item.id %}selected{% endif %}>
+                    {{ item.type }} - {{ item.description }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Remove Equipment</button>
+    </form>
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+</body>
+</html>
