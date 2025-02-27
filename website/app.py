@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify 
+from datetime import datetime
 import uuid
 
 app = Flask(__name__)
@@ -102,6 +103,10 @@ def equipment_detail(equipment_type):
         return "Equipment not found", 404
 
     return render_template('equipment.html', equipment=equipment_info, history=history)
+
+@app.route('/reservations')
+def reservations():
+    return render_template('reservations.html', current_year=datetime.now().year, current_month=datetime.now().month)
 
 if __name__ == '__main__':
     app.run(debug=True)

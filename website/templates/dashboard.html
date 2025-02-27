@@ -66,6 +66,11 @@
                         <td>{{ item.description }}</td>
                         <td>{{ item.availability }}</td>
                         <td>{{ item.quality }}</td>
+                        <td>    
+                            <a href="{{ url_for('reservations') }}" style="font-size: 22px; text-decoration: none; color: blue;">
+                                Make a Reservation
+                            </a>
+                        </td>
                         <td>
                             <a href="{{ url_for('remove_equipment', type=item.type) }}" style="color: red; text-decoration: none;">Remove</a>
                         </td>
