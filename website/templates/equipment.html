@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ equipment.type }} Details</title>
+</head>
+<body>
+    <h2>{{ equipment.type }} - Details</h2>
+    <p><strong>Description:</strong> {{ equipment.description }}</p>
+    <p><strong>Availability:</strong> {{ equipment.availability }}</p>
+    <p><strong>Quality:</strong> {{ equipment.quality }}</p>
+
+    <h3>Past Checkouts & Reservations</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if history %}
+                {% for record in history %}
+                    <tr>
+                        <td>{{ record.user }}</td>
+                        <td>{{ record.date }}</td>
+                        <td>{{ record.status }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="3">No past checkouts or reservations.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+</body>
+</html>

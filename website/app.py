@@ -16,6 +16,22 @@ equipment_database = [
     {'id': str(uuid.uuid4()),'type': 'computer3', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '8'},
 ]
 
+# sample equipment history data
+equipment_history = {
+    "computer1": [
+        {"user": "Alice", "date": "2024-01-10", "status": "Checked Out"},
+        {"user": "Bob", "date": "2024-02-05", "status": "Reserved"}
+    ],
+    "computer2": [
+        {"user": "Charlie", "date": "2024-01-15", "status": "Checked Out"},
+        {"user": "David", "date": "2024-02-10", "status": "Reserved"}
+    ],
+    "computer3": [
+        {"user": "Eve", "date": "2024-01-20", "status": "Checked Out"},
+        {"user": "Frank", "date": "2024-02-15", "status": "Reserved"}
+    ]
+}
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -73,6 +89,19 @@ def remove_equipment():
 
     selected_id = request.args.get('id')  # Get selected ID from the link
     return render_template('remove_equipment.html', equipment=equipment_database, selected_id=selected_id)    
+
+@app.route('/equipment_history/<equipment_type>')
+def equipment_detail(equipment_type):
+    # Find the equipment details
+    equipment_info = next((item for item in equipment_database if item["type"] == equipment_type), None)
+
+    # Get the history of checkouts and reservations
+    history = equipment_history.get(equipment_type, [])
+
+    if not equipment_info:
+        return "Equipment not found", 404
+
+    return render_template('equipment.html', equipment=equipment_info, history=history)
 
 if __name__ == '__main__':
     app.run(debug=True)

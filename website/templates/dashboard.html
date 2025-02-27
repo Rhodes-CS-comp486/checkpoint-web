@@ -47,6 +47,7 @@
         <thread>
             <tr>
                 <th>Equipment Type</th>
+                <th>History Log</th>
                 <th>Description</th>
                 <th>Availability</th>
                 <th>Quantity</th>
@@ -57,6 +58,11 @@
                 {% for item in equipment %}
                     <tr>
                         <td>{{ item.type }}</td>
+                        <td>
+                            <a href="{{ url_for('equipment_detail', equipment_type=item.type) }}" style="color: black; text-decoration: none;">
+                                History
+                            </a>
+                        </td>
                         <td>{{ item.description }}</td>
                         <td>{{ item.availability }}</td>
                         <td>{{ item.quality }}</td>
