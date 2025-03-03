@@ -7,7 +7,7 @@
 </head>
 <body>
     <h2>Remove Equipment</h2>
-    <form action="{{ url_for('remove_equipment') }}" method="POST">
+    <form action="{{ url_for('remove_equipment', user_id=user_id) }}" method="POST">
         <label for="id">Select Equipment to Remove:</label>
         <select name="id" required>
             {% for item in equipment %}
@@ -18,6 +18,6 @@
         </select>
         <button type="submit">Remove Equipment</button>
     </form>
-    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+    <a href="{{ url_for('dashboard', user_id=user_id) }}">Back to Dashboard</a>
 </body>
 </html>

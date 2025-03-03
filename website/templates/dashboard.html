@@ -51,6 +51,8 @@
                 <th>Description</th>
                 <th>Availability</th>
                 <th>Quantity</th>
+                <th>Reserve</th>
+                <th>Remove</th>
             </tr>
         </thread>
         <tbody>
@@ -58,22 +60,12 @@
                 {% for item in equipment %}
                     <tr>
                         <td>{{ item.type }}</td>
-                        <td>
-                            <a href="{{ url_for('equipment_detail', equipment_type=item.type) }}" style="color: black; text-decoration: none;">
-                                History
-                            </a>
-                        </td>
+                        <td><a href="{{ url_for('equipment_detail', user_id=user_id, equipment_type=item.type) }}">History</a></td>
                         <td>{{ item.description }}</td>
                         <td>{{ item.availability }}</td>
                         <td>{{ item.quality }}</td>
-                        <td>    
-                            <a href="{{ url_for('reservations') }}" style="font-size: 22px; text-decoration: none; color: blue;">
-                                Make a Reservation
-                            </a>
-                        </td>
-                        <td>
-                            <a href="{{ url_for('remove_equipment', type=item.type) }}" style="color: red; text-decoration: none;">Remove</a>
-                        </td>
+                        <td><a href="{{ url_for('reservations', user_id=user_id) }}">Make a Reservation</a></td>
+                        <td><a href="{{ url_for('remove_equipment', user_id=user_id, id=item.id) }}" style="color: red;">Remove</a></td>
                     </tr>
                 {% endfor %}
             {% else %}
@@ -84,7 +76,8 @@
         </tbody>
     </table>
     <br>
-    <a href="{{ url_for('add_equipment') }}">Add Equipment</a>
+    <a href="{{ url_for('user_history', user_id=user_id) }}">View My History</a>
+    <a href="{{ url_for('add_equipment', user_id=user_id) }}">Add Equipment</a>
     <a href="{{ url_for('home') }}">Logout</a>
 </body>
 </html>

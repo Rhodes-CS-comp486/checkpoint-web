@@ -3,35 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ equipment.type }} Details</title>
+    <title>{{ username }}'s History</title>
 </head>
 <body>
-    <h2>{{ equipment.type }} - Details</h2>
-    <p><strong>Description:</strong> {{ equipment.description }}</p>
-    <p><strong>Availability:</strong> {{ equipment.availability }}</p>
-    <p><strong>Quality:</strong> {{ equipment.quality }}</p>
+    <h2>{{ username }} - Checkout & Reservation History</h2>
 
-    <h3>Past Checkouts & Reservations</h3>
     <table border="1">
         <thead>
             <tr>
-                <th>User</th>
+                <th>Equipment Type</th>
+                <th>Equipment History</th>
                 <th>Date</th>
                 <th>Status</th>
+                <th>Current Availability</th>
+                <th>Reserve</th>
             </tr>
         </thead>
         <tbody>
             {% if history %}
                 {% for record in history %}
                     <tr>
-                        <td>{{ record.user }}</td>
+                        <td>{{ record.equipment_type }}</td>
+                        <td><a href="{{ url_for('equipment_detail', user_id=user_id, equipment_type=record.equipment_type) }}">History</a></td>
                         <td>{{ record.date }}</td>
                         <td>{{ record.status }}</td>
+                        <td>{{ record.availability }}</td>
+                        <td><a href="{{ url_for('reservations', user_id=user_id) }}">Make a Reservation</a></td>
                     </tr>
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="3">No past checkouts or reservations.</td>
+                    <td colspan="6">No history found.</td>
                 </tr>
             {% endif %}
         </tbody>
