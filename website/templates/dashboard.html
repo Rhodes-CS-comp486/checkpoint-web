@@ -5,40 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style> 
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 20px;
-        }
-        th, td {
-            border: 2px solid black;
-            padding: 15px;
-            text-align: left;
-            font-size: 22px;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        a{
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            font-size: 20px;
-            text-decoration: none;
-            color: blue;
-        }
-        a:hover{
-            text-decoration: underline;
-        }
-    </style>
+
+    <!-- css stylesheet link -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 </head>
 <body>
     <h2>Equipment Dashboard</h2>

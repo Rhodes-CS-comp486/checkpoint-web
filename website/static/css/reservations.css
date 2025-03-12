@@ -1,0 +1,18 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+#calendar {
+    max-width: 900px;
+    margin: 40px auto;
+}
+a {
+    font-size: 20px;
+    text-decoration: none;
+    color: blue;
+    display: block;
+    margin-top: 20px;
+}
+a:hover {
+    text-decoration: underline;
+}
