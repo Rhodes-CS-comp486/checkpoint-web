@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- css stylesheet link -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <h2>Equipment Dashboard</h2>
@@ -34,7 +34,7 @@
                         <td>{{ item.availability }}</td>
                         <td>{{ item.quality }}</td>
                         <td><a href="{{ url_for('reservations', user_id=user_id) }}">Make a Reservation</a></td>
-                        <td><a href="{{ url_for('remove_equipment', user_id=user_id, id=item.id) }}" style="color: red;">Remove</a></td>
+                        <td><a href="{{ url_for('remove_equipment', user_id=user_id, id=item.id) }}">Remove</a></td>
                     </tr>
                 {% endfor %}
             {% else %}
@@ -45,8 +45,10 @@
         </tbody>
     </table>
     <br>
-    <a href="{{ url_for('user_history', user_id=user_id) }}">View My History</a>
-    <a href="{{ url_for('add_equipment', user_id=user_id) }}">Add Equipment</a>
-    <a href="{{ url_for('home') }}">Logout</a>
+    <ul>
+        <li><a href="{{ url_for('user_history', user_id=user_id) }}">View My History</a></li>
+        <li><a href="{{ url_for('add_equipment', user_id=user_id) }}">Add Equipment</a></li>
+        <li><a href="{{ url_for('home') }}">Logout</a></li>
+    </ul>
 </body>
 </html>

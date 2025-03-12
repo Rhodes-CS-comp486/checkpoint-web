@@ -1,0 +1,92 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #111;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+a {
+    color: #ff4444;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    color: #ffffff;
+}
+
+h2 {
+    color: #ff4444;
+}
+
+/* Form Styling */
+form {
+    background-color: #222;
+    padding: 20px;
+    border-radius: 10px;
+    display: inline-block;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.8);
+}
+
+input, select, button {
+    display: block;
+    margin: 10px auto;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+}
+
+input, select {
+    background-color: #333;
+    color: #fff;
+}
+
+button {
+    background-color: #ff4444;
+    color: #fff;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background-color: #cc0000;
+}
+
+/* Table Styling */
+table {
+    width: 80%;
+    margin: 20px auto;
+    border-collapse: collapse;
+    background-color: #222;
+    color: #fff;
+}
+
+th, td {
+    border: 1px solid #ff4444;
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    background-color: #ff4444;
+    color: #fff;
+}
+
+tr:nth-child(even) {
+    background-color: #333;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#calendar {
+    max-width: 900px;
+    margin: 40px auto;
+    overflow: hidden;
+}
