@@ -8,24 +8,18 @@
 </head>
 <body>
     <h2>Reserve Equipment</h2>
-
     <!-- Reservation Form -->
     <form method="POST" action="{{ url_for('make_reservation', user_id=user_id) }}">
         <label for="equipment">Select Equipment:</label>
         <select name="equipment" id="equipment" required>
             {% for item in equipment %}
-                {% if item.availability == 'available' %}
-                    <option value="{{ item.type }}">{{ item.type }} - {{ item.description }}</option>
-                {% endif %}
+                <option value="{{ item.type }}">{{ item.type }} - {{ item.description }}</option>
             {% endfor %}
         </select>
-
         <label for="date">Select Date:</label>
         <input type="date" name="date" required>
-
         <button type="submit">Reserve Equipment</button>
     </form>
-
     <!-- Reservation Table -->
     <h3>Existing Reservations</h3>
     {% if reservations %}
@@ -61,7 +55,6 @@
     {% else %}
         <p>No reservations yet.</p>
     {% endif %}
-
     <br>
     <a href="{{ url_for('dashboard', user_id=user_id) }}">Back to Dashboard</a>
 </body>

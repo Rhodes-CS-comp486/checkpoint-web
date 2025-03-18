@@ -175,46 +175,31 @@ def reservations(user_id):
 def make_reservation(user_id):
     equipment_type = request.form.get('equipment')
     date = request.form.get('date')
-
     if not equipment_type or not date:
         return "Missing required fields", 400
-
-    # Find the selected equipment
-    equipment = next((item for item in equipment_database if item["type"] == equipment_type), None)
-
-    if not equipment or equipment["availability"] == "not available":
-        return "Equipment not available", 400
-
-    # Mark the equipment as unavailable
-    equipment["availability"] = "not available"
-
-    # Store the reservation
+    # Check if the equipment is already reserved on this date
+    if date in reservations_database:
+        for res in reservations_database[date]:
+            if res["equipment"] == equipment_type:
+                return "This equipment is already reserved on this date. Choose another date.", 400
+    # Store the reservation DB
     if date not in reservations_database:
         reservations_database[date] = []
     reservations_database[date].append({"equipment": equipment_type, "user": user_id})
-
     return redirect(url_for('reservations', user_id=user_id))
 
 @app.route('/remove_reservation/<user_id>', methods=['POST'])
 def remove_reservation(user_id):
     date = request.form.get('date')
     equipment_type = request.form.get('equipment')
-
     if not date or not equipment_type:
         return "Missing required fields", 400
-
+    # Remove only the specific reservation
     if date in reservations_database:
-        reservations_database[date] = [res for res in reservations_database[date] if res["equipment"] != equipment_type]
-
-        # Remove the reservation entry completely if no more reservations exist for that date
+        reservations_database[date] = [res for res in reservations_database[date] if not (res["equipment"] == equipment_type and res["user"] == user_id)]
+        # Remove the date entry if no reservations are left for that date
         if not reservations_database[date]:
             del reservations_database[date]
-
-    # Mark the equipment as available again
-    for equipment in equipment_database:
-        if equipment["type"] == equipment_type:
-            equipment["availability"] = "available"
-
     return redirect(url_for('reservations', user_id=user_id))
 
 @app.route('/user_history/<user_id>')
