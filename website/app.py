@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 
 app = Flask(__name__)
@@ -85,9 +85,15 @@ def login():
 def dashboard(user_id):
     # Find the username using user_id
     username = next((user["username"] for user in login_database.values() if user["id"] == user_id), None)
-
     if not username:
         return "User not found", 404
+
+    # Check today's reservations and mark equipment unavailable if reserved
+    today_str = datetime.today().strftime("%Y-%m-%d")
+    reserved_today = set(res["equipment"] for res in reservations_database.get(today_str, []))
+
+    for item in equipment_database:
+        item["availability"] = "unavailable" if item["type"] in reserved_today else "available"
 
     return render_template('dashboard.html', username=username, user_id=user_id, equipment=equipment_database)
 
@@ -168,24 +174,62 @@ def reservations(user_id):
     if not user:
         return "User not found", 404
 
-    return render_template('reservations.html', user_id=user_id, equipment=equipment_database, reservations=reservations_database)
+    # Convert reservations to FullCalendar-compatible format
+    events = []
+    for date_str, res_list in reservations_database.items():
+        for res in res_list:
+            events.append({
+                "title": f"{res['equipment']} ({res['user']})",
+                "start": date_str
+            })
 
+    return render_template(
+        'reservations.html',
+        user_id=user_id,
+        equipment=equipment_database,
+        reservations=reservations_database,
+        calendar_events=events
+    )
 
 @app.route('/make_reservation/<user_id>', methods=['POST'])
 def make_reservation(user_id):
     equipment_type = request.form.get('equipment')
-    date = request.form.get('date')
-    if not equipment_type or not date:
+    start_date = request.form.get('start_date')
+    end_date = request.form.get('end_date')
+
+    if not equipment_type or not start_date or not end_date:
         return "Missing required fields", 400
-    # Check if the equipment is already reserved on this date
-    if date in reservations_database:
-        for res in reservations_database[date]:
+
+    try:
+        start = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end = datetime.strptime(end_date, "%Y-%m-%d").date()
+    except ValueError:
+        return "Invalid date format", 400
+
+    if start > end:
+        return "Start date must be before or equal to end date", 400
+
+    # Check for overlapping reservations
+    current = start
+    while current <= end:
+        date_str = current.strftime("%Y-%m-%d")
+        for res in reservations_database.get(date_str, []):
             if res["equipment"] == equipment_type:
-                return "This equipment is already reserved on this date. Choose another date.", 400
-    # Store the reservation DB
-    if date not in reservations_database:
-        reservations_database[date] = []
-    reservations_database[date].append({"equipment": equipment_type, "user": user_id})
+                return f"{equipment_type} is already reserved on {date_str}", 400
+        current += timedelta(days=1)
+
+    # Add reservation for each date in the range
+    current = start
+    while current <= end:
+        date_str = current.strftime("%Y-%m-%d")
+        if date_str not in reservations_database:
+            reservations_database[date_str] = []
+        reservations_database[date_str].append({
+            "equipment": equipment_type,
+            "user": user_id
+        })
+        current += timedelta(days=1)
+
     return redirect(url_for('reservations', user_id=user_id))
 
 @app.route('/remove_reservation/<user_id>', methods=['POST'])
