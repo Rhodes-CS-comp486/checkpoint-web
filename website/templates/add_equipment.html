@@ -4,24 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Equipment</title>
-
-    <!-- css stylesheet link -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <h2>Add Equipment</h2>
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
     <form action="{{ url_for('add_equipment', user_id=user_id) }}" method="POST">
-        <input type="text" name="type" placeholder="Equipment Type" required>
-        <input type="text" name="description" placeholder="Description" required>
-        <select name="availability">
-            <option value="available">Available</option>
-            <option value="not available">Not Available</option>
+        <label for="type">Equipment Type:</label>
+        <input type="text" name="type" placeholder="e.g., computer4" required>
+
+        <label for="description">Description:</label>
+        <input type="text" name="description" placeholder="e.g., Dell Latitude 7400" required>
+
+        <label for="availability">Availability:</label>
+        <select name="availability" required>
+            <option value="true" selected>Available</option>
+            <option value="false">Not Available</option>
         </select>
-        <input type="number" name="quality" placeholder="Quality (1-10)" required min="1" max="10">
+
+        <label for="quality">Quality (1-10):</label>
+        <input type="number" name="quality" placeholder="e.g., 8" required min="1" max="10">
+
         <button type="submit">Add Equipment</button>
     </form>
-    <br>
-    <br>
+
+    <br><br>
     <a href="{{ url_for('dashboard', user_id=user_id) }}">Back to Dashboard</a>
 </body>
 </html>

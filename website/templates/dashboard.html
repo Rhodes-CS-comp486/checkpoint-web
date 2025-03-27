@@ -31,7 +31,7 @@
                         <td>{{ item.type }}</td>
                         <td><a href="{{ url_for('equipment_detail', user_id=user_id, equipment_type=item.type) }}">History</a></td>
                         <td>{{ item.description }}</td>
-                        <td>{{ item.availability }}</td>
+                        <td>{{ 'available' if item.availability else 'unavailable' }}</td>
                         <td>{{ item.quality }}</td>
                         <td><a href="{{ url_for('reservations', user_id=user_id) }}">Make a Reservation</a></td>
                         <td><a href="{{ url_for('remove_equipment', user_id=user_id, id=item.id) }}">Remove</a></td>

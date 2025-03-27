@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Remove Equipment</title>
-
-    <!-- css stylesheet link -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <h2>Remove Equipment</h2>
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
     <form action="{{ url_for('remove_equipment', user_id=user_id) }}" method="POST">
         <label for="id">Select Equipment to Remove:</label>
         <select name="id" required>
@@ -21,8 +24,8 @@
         </select>
         <button type="submit">Remove Equipment</button>
     </form>
-    <br>
-    <br>
+
+    <br><br>
     <a href="{{ url_for('dashboard', user_id=user_id) }}">Back to Dashboard</a>
 </body>
 </html>

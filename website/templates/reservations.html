@@ -30,10 +30,13 @@
         <button type="submit">Reserve Equipment</button>
     </form>
 
+    {% if not calendar_events %}
+        <p>No reservations have been made yet.</p>
+    {% endif %}
+
     <h3>Reservations Calendar</h3>
     <div id="calendar"></div>
 
-    <!-- FullCalendar JS -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js'></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -44,6 +47,18 @@
                 events: {{ calendar_events|tojson }}
             });
             calendar.render();
+        });
+    </script>
+
+    <script>
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function (e) {
+            const start = new Date(form.start_date.value);
+            const end = new Date(form.end_date.value);
+            if (end < start) {
+                e.preventDefault();
+                alert("End date must be the same or after the start date.");
+            }
         });
     </script>
 
