@@ -4,18 +4,19 @@ import uuid
 
 app = Flask(__name__)
 
-# Hardcoded user data for now
+# Hardcoded user data
 login_database = {
-    "user1": {"id": str(uuid.uuid4()), "username": "user1", "password": "password123"},
-    "user2": {"id": str(uuid.uuid4()), "username": "user2", "password": "mypassword"},
-    "user3": {"id": str(uuid.uuid4()), "username": "user3", "password": "12345"}
+    "user1": {"id": str(uuid.uuid4()), "username": "user1", "password": "password123", "admin": False},
+    "user2": {"id": str(uuid.uuid4()), "username": "user2", "password": "mypassword", "admin": False},
+    "user3": {"id": str(uuid.uuid4()), "username": "user3", "password": "12345", "admin": False},
+    "admin": {"id": str(uuid.uuid4()), "username": "admin", "password": "admin", "admin": True},
 }
 
-# sample equipment data
+# Equipment data with boolean availability
 equipment_database = [
-    {'id': str(uuid.uuid4()),'type': 'computer1', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '10'},
-    {'id': str(uuid.uuid4()),'type': 'computer2', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '9'},
-    {'id': str(uuid.uuid4()),'type': 'computer3', 'description': 'Dell Latitude 7400', 'availability': 'available', 'quality': '8'},
+    {'id': str(uuid.uuid4()), 'type': 'computer1', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '10'},
+    {'id': str(uuid.uuid4()), 'type': 'computer2', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '9'},
+    {'id': str(uuid.uuid4()), 'type': 'computer3', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '8'},
 ]
 
 # sample equipment history data
@@ -46,7 +47,6 @@ equipment_history = {
     ]
 }
 
-# sample reservations data
 reservations_database = {}
 
 @app.route('/')
@@ -62,7 +62,12 @@ def register():
         if username in login_database:
             return render_template('register.html', error='Username already exists')
         else:
-            login_database[username] = {"username": username, "password": password}
+            login_database[username] = {
+                "id": str(uuid.uuid4()),
+                "username": username,
+                "password": password,
+                "admin": False
+            }
             return render_template('register.html', success='User registered successfully')
     return render_template('register.html')
 
@@ -74,32 +79,27 @@ def login():
         user = login_database.get(username)
 
         if user and user['password'] == password:
-            # Redirect to dashboard with user_id in the URL
             return redirect(url_for('dashboard', user_id=user['id']))
         else:
             return render_template('login.html', error='Invalid credentials')
-    
     return render_template('login.html')
 
 @app.route('/dashboard/<user_id>')
 def dashboard(user_id):
-    # Find the username using user_id
     username = next((user["username"] for user in login_database.values() if user["id"] == user_id), None)
     if not username:
         return "User not found", 404
 
-    # Check today's reservations and mark equipment unavailable if reserved
     today_str = datetime.today().strftime("%Y-%m-%d")
     reserved_today = set(res["equipment"] for res in reservations_database.get(today_str, []))
 
     for item in equipment_database:
-        item["availability"] = "unavailable" if item["type"] in reserved_today else "available"
+        item["availability"] = False if item["type"] in reserved_today else True
 
     return render_template('dashboard.html', username=username, user_id=user_id, equipment=equipment_database)
 
 @app.route('/add_equipment/<user_id>', methods=['GET', 'POST'])
 def add_equipment(user_id):
-    # Validate user_id exists
     user = next((user for user in login_database.values() if user["id"] == user_id), None)
     if not user:
         return "User not found", 404
@@ -107,44 +107,36 @@ def add_equipment(user_id):
     if request.method == 'POST':
         equipment_type = request.form.get('type')
         description = request.form.get('description')
-        availability = request.form.get('availability')
         quality = request.form.get('quality')
 
-        # Validate inputs
-        if not equipment_type or not description or not availability or not quality:
+        if not equipment_type or not description or not quality:
             return render_template('add_equipment.html', user_id=user_id, error="All fields are required.")
 
         new_equipment = {
             'id': str(uuid.uuid4()),
             'type': equipment_type,
             'description': description,
-            'availability': availability,
+            'availability': True,  # default to available
             'quality': quality
         }
         equipment_database.append(new_equipment)
-
         return redirect(url_for('dashboard', user_id=user_id))
 
     return render_template('add_equipment.html', user_id=user_id)
 
 @app.route('/remove_equipment/<user_id>', methods=['GET', 'POST'])
 def remove_equipment(user_id):
-    # Validate user_id exists
     user = next((user for user in login_database.values() if user["id"] == user_id), None)
     if not user:
         return "User not found", 404
 
     if request.method == 'POST':
         id_to_remove = request.form.get('id')
-
-        # Check if the ID exists
         global equipment_database
         if not any(item['id'] == id_to_remove for item in equipment_database):
             return render_template('remove_equipment.html', user_id=user_id, equipment=equipment_database, error="Equipment not found.")
 
-        # Remove the equipment
         equipment_database = [item for item in equipment_database if item['id'] != id_to_remove]
-
         return redirect(url_for('dashboard', user_id=user_id))
 
     selected_id = request.args.get('id')
@@ -152,15 +144,11 @@ def remove_equipment(user_id):
 
 @app.route('/equipment_history/<user_id>/<equipment_type>')
 def equipment_detail(user_id, equipment_type):
-    # Validate user_id exists
     user = next((user for user in login_database.values() if user["id"] == user_id), None)
     if not user:
         return "User not found", 404
 
-    # Get equipment details
     equipment_info = next((item for item in equipment_database if item["type"] == equipment_type), None)
-
-    # Get the history of checkouts and reservations
     history = equipment_history.get(equipment_type, [])
 
     if not equipment_info:
@@ -174,7 +162,6 @@ def reservations(user_id):
     if not user:
         return "User not found", 404
 
-    # Convert reservations to FullCalendar-compatible format
     events = []
     for date_str, res_list in reservations_database.items():
         for res in res_list:
@@ -218,16 +205,31 @@ def make_reservation(user_id):
                 return f"{equipment_type} is already reserved on {date_str}", 400
         current += timedelta(days=1)
 
-    # Add reservation for each date in the range
+    # Add reservation and history records
     current = start
     while current <= end:
         date_str = current.strftime("%Y-%m-%d")
+
+        # Add to reservations
         if date_str not in reservations_database:
             reservations_database[date_str] = []
         reservations_database[date_str].append({
             "equipment": equipment_type,
             "user": user_id
         })
+
+        # Get username and add to equipment history
+        user = next((u for u in login_database.values() if u["id"] == user_id), None)
+        if user:
+            username = user["username"]
+            if equipment_type not in equipment_history:
+                equipment_history[equipment_type] = []
+            equipment_history[equipment_type].append({
+                "user": username,
+                "date": date_str,
+                "status": "Reserved"
+            })
+
         current += timedelta(days=1)
 
     return redirect(url_for('reservations', user_id=user_id))
@@ -238,21 +240,20 @@ def remove_reservation(user_id):
     equipment_type = request.form.get('equipment')
     if not date or not equipment_type:
         return "Missing required fields", 400
-    # Remove only the specific reservation
+
     if date in reservations_database:
         reservations_database[date] = [res for res in reservations_database[date] if not (res["equipment"] == equipment_type and res["user"] == user_id)]
-        # Remove the date entry if no reservations are left for that date
         if not reservations_database[date]:
             del reservations_database[date]
+
     return redirect(url_for('reservations', user_id=user_id))
 
 @app.route('/user_history/<user_id>')
 def user_history(user_id):
-    # Validate user_id exists
     user = next((user for user in login_database.values() if user["id"] == user_id), None)
     if not user:
         return "User not found", 404
-    
+
     username = user["username"]
     user_transactions = []
 
