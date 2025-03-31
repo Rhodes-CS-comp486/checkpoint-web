@@ -21,7 +21,6 @@
                 <th>Availability</th>
                 <th>Quantity</th>
                 <th>Reserve</th>
-                <th>Remove</th>
             </tr>
         </thread>
         <tbody>
@@ -34,7 +33,13 @@
                         <td>{{ 'available' if item.availability else 'unavailable' }}</td>
                         <td>{{ item.quality }}</td>
                         <td><a href="{{ url_for('reservations', user_id=user_id) }}">Make a Reservation</a></td>
-                        <td><a href="{{ url_for('remove_equipment', user_id=user_id, id=item.id) }}">Remove</a></td>
+                        <td>
+                            {% if is_admin %}
+                                <a href="{{ url_for('remove_equipment', user_id=user_id, id=item.id) }}">Remove</a>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
                     </tr>
                 {% endfor %}
             {% else %}
@@ -47,7 +52,10 @@
     <br>
     <ul>
         <li><a href="{{ url_for('user_history', user_id=user_id) }}">View My History</a></li>
-        <li><a href="{{ url_for('add_equipment', user_id=user_id) }}">Add Equipment</a></li>
+        {% if is_admin %}
+            <li><a href="{{ url_for('add_equipment', user_id=user_id) }}">Add Equipment</a></li>
+            <li><a href="{{ url_for('admin_panel', user_id=user_id) }}">Admin Panel</a></li>
+        {% endif %}
         <li><a href="{{ url_for('home') }}">Logout</a></li>
     </ul>
 </body>
