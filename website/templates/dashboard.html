@@ -21,6 +21,8 @@
                 <th>Availability</th>
                 <th>Quantity</th>
                 <th>Reserve</th>
+                <th>Checkout</th>
+                
             </tr>
         </thread>
         <tbody>
@@ -33,6 +35,15 @@
                         <td>{{ 'available' if item.availability else 'unavailable' }}</td>
                         <td>{{ item.quality }}</td>
                         <td><a href="{{ url_for('reservations', user_id=user_id) }}">Make a Reservation</a></td>
+                        <td>
+                            {% if item.availability %}
+                                <form method="GET" action="{{ url_for('checkout_equipment', user_id=user_id, equipment_type=item.type) }}">
+                                    <button type="submit">Checkout</button>
+                                </form>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
                         <td>
                             {% if is_admin %}
                                 <a href="{{ url_for('remove_equipment', user_id=user_id, id=item.id) }}">Remove</a>

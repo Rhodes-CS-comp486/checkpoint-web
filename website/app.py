@@ -366,5 +366,63 @@ def user_history(user_id):
     return render_template('user_history.html', username=username, user_id=user_id, history=user_transactions)
 
 
+@app.route('/checkout/<user_id>/<equipment_type>', methods=['GET', 'POST'])
+def checkout_equipment(user_id, equipment_type):
+    user = next((u for u in login_database.values() if u["id"] == user_id), None)
+    if not user:
+        return "User not found", 404
+
+    username = user["username"]
+    today = datetime.today().date()
+    max_days = 7
+
+    # Check for reservation conflicts in the next 7 days
+    for i in range(1, 8):
+        check_date = (today + timedelta(days=i)).strftime("%Y-%m-%d")
+        for res in reservations_database.get(check_date, []):
+            if res["equipment"] == equipment_type:
+                max_days = i - 1
+                break
+        if max_days < i:
+            break
+
+    if max_days == 0:
+        return render_template("checkout.html", user_id=user_id, equipment_type=equipment_type, max_days=0, error="This item cannot be checked out right now due to an upcoming reservation.")
+
+    if request.method == 'POST':
+        days = int(request.form.get('days'))
+
+        if days < 1 or days > max_days:
+            return render_template("checkout.html", user_id=user_id, equipment_type=equipment_type, max_days=max_days, error=f"You can only check out for up to {max_days} day(s) without interfering with existing reservations.")
+
+        # Proceed with checkout
+        for i in range(days):
+            checkout_date = (today + timedelta(days=i)).strftime("%Y-%m-%d")
+
+            # Add to reservations to block reservation system
+            if checkout_date not in reservations_database:
+                reservations_database[checkout_date] = []
+
+            reservations_database[checkout_date].append({
+                "equipment": equipment_type,
+                "user": user_id
+            })
+
+            # Add to equipment history
+            if equipment_type not in equipment_history:
+                equipment_history[equipment_type] = []
+
+            equipment_history[equipment_type].append({
+                "user": username,
+                "date": checkout_date,
+                "status": "Checked Out"
+            })
+
+        success_message = f"{equipment_type} successfully checked out for {days} day(s)."
+        return render_template("checkout.html", user_id=user_id, equipment_type=equipment_type, max_days=0, success=success_message)
+
+    return render_template("checkout.html", user_id=user_id, equipment_type=equipment_type, max_days=max_days)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
