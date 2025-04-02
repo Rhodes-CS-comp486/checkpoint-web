@@ -4,8 +4,11 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from io import BytesIO
 import uuid
+import requests
 
 app = Flask(__name__)
+
+API_BASE_URL = "http://localhost:8000"  # Replace with the actual backend URL
 
 # Hardcoded user data
 login_database = {
@@ -62,17 +65,30 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        email = request.form.get('email')
+        full_name = request.form.get('full_name')
 
-        if username in login_database:
-            return render_template('register.html', error='Username already exists')
+
+        user_data = {
+            "username": username,
+            "email": email,
+            "full_name": full_name,
+            "hashed_password": password,
+            "admin": False
+        }
+
+        # Send the request to the backend API
+        response = requests.put(f"{API_BASE_URL}/users/", json=user_data)
+
+        # Handle the response
+        if response.status_code == 200:
+            return render_template('register.html', success="User registered successfully")
+        elif response.status_code == 422:
+            error_message = response.json().get('detail', 'Validation error')
+            return render_template('register.html', error=error_message)
         else:
-            login_database[username] = {
-                "id": str(uuid.uuid4()),
-                "username": username,
-                "password": password,
-                "admin": False
-            }
-            return render_template('register.html', success='User registered successfully')
+            return render_template('register.html', error=f"Error: {response.text}")
+
     return render_template('register.html')
 
 
@@ -88,6 +104,23 @@ def login():
         else:
             return render_template('login.html', error='Invalid credentials')
     return render_template('login.html')
+
+
+@app.route('/admin/<user_id>', methods=['GET', 'POST'])
+def admin_panel(user_id):
+    # Verify the user is an admin
+    current_user = next((u for u in login_database.values() if u["id"] == user_id), None)
+    if not current_user or not current_user["admin"]:
+        return "Unauthorized", 403
+
+    if request.method == 'POST':
+        target_username = request.form.get('username')
+        action = request.form.get('action')
+
+        if target_username in login_database and target_username != current_user["username"]:
+            login_database[target_username]["admin"] = (action == "promote")
+
+    return render_template("admin.html", user_id=user_id, users=login_database)
 
 
 @app.route('/dashboard/<user_id>')
@@ -106,23 +139,6 @@ def dashboard(user_id):
         item["availability"] = False if item["type"] in reserved_today else True
 
     return render_template('dashboard.html', username=username, user_id=user_id, equipment=equipment_database, is_admin=is_admin)
-
-
-@app.route('/admin/<user_id>', methods=['GET', 'POST'])
-def admin_panel(user_id):
-    # Verify the user is an admin
-    current_user = next((u for u in login_database.values() if u["id"] == user_id), None)
-    if not current_user or not current_user["admin"]:
-        return "Unauthorized", 403
-
-    if request.method == 'POST':
-        target_username = request.form.get('username')
-        action = request.form.get('action')
-
-        if target_username in login_database and target_username != current_user["username"]:
-            login_database[target_username]["admin"] = (action == "promote")
-
-    return render_template("admin.html", user_id=user_id, users=login_database)
 
 
 @app.route('/admin/generate_pdf/<user_id>', methods=['POST'])

@@ -17,11 +17,17 @@
         <p style="color: green;">{{ success }}</p>
     {% endif %}
     <form method="POST">
-        <label for="username">Create a Username:</label><br>
+        <label for="username">Create a username:</label><br>
         <input type="text" id="username" name="username" required><br><br>
 
-        <label for="password">Create a Password:</label><br>
+        <label for="password">Create a password:</label><br>
         <input type="password" id="password" name="password" required><br><br>
+
+        <label for="email">Enter your email:</label><br>
+        <input type="text" id="email" name="email" required><br><br>
+
+        <label for="full_name">Enter your full name:</label><br>
+        <input type="text" id="full_name" name="full_name" required><br><br>
 
         <input type="submit" value="Sign-up">
     </form>
