@@ -1,14 +1,18 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file, session
 from datetime import datetime, timedelta
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from io import BytesIO
 import uuid
 import requests
+import secrets
+
 
 app = Flask(__name__)
 
-API_BASE_URL = "http://localhost:8000"  # Replace with the actual backend URL
+API_BASE_URL = "http://localhost:8000"
+app.secret_key = secrets.token_hex(32)
+
 
 # Hardcoded user data
 login_database = {
@@ -66,13 +70,14 @@ def register():
         username = request.form.get('username')
         password = request.form.get('password')
         email = request.form.get('email')
-        full_name = request.form.get('full_name')
+        full_name = request.form.get('full_name')      
 
 
         user_data = {
             "username": username,
             "email": email,
             "full_name": full_name,
+            "user_id": str(uuid.uuid4()),
             "hashed_password": password,
             "admin": False
         }
@@ -97,12 +102,34 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        user = login_database.get(username)
 
-        if user and user['password'] == password:
-            return redirect(url_for('dashboard', user_id=user['id']))
-        else:
-            return render_template('login.html', error='Invalid credentials')
+        # API expects form-encoded data, not JSON
+        data = {
+            "username": username,
+            "password": password
+        }
+
+        try:
+            response = requests.post(f"{API_BASE_URL}/token", data=data)
+            response.raise_for_status()  # Raises error for 4xx/5xx responses
+
+            # If login is successful, backend should return an access token and user ID
+            response_data = response.json()
+            token = response_data.get("access_token")
+            user_id = response_data.get("user_id")  # Assuming user_id is returned from the API
+
+            if token and user_id:
+                # Store token and user_id in session
+                session["token"] = token
+                session["user_id"] = user_id
+
+                # Redirect to dashboard, passing user_id as a URL parameter
+                return redirect(url_for('dashboard', user_id=user_id))
+            else:
+                return render_template('login.html', error="Invalid credentials")
+        except requests.exceptions.RequestException as e:
+            return render_template('login.html', error=f"Login failed: {str(e)}")
+
     return render_template('login.html')
 
 
