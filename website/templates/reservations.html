@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reservation System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/reservations.css') }}">
-
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.css' rel='stylesheet' />
 </head>
 <body>
     <h2>Reserve Equipment</h2>
-
     <!-- Reservation Form -->
     <form method="POST" action="{{ url_for('make_reservation', user_id=user_id) }}">
         <label for="equipment">Select Equipment:</label>
@@ -20,23 +18,54 @@
                 <option value="{{ item.type }}">{{ item.type }} - {{ item.description }}</option>
             {% endfor %}
         </select>
-
         <label for="start_date">Start Date:</label>
         <input type="date" name="start_date" required>
-
         <label for="end_date">End Date:</label>
         <input type="date" name="end_date" required>
-
         <button type="submit">Reserve Equipment</button>
     </form>
-
-    {% if not calendar_events %}
-        <p>No reservations have been made yet.</p>
-    {% endif %}
-
     <h3>Reservations Calendar</h3>
     <div id="calendar"></div>
-
+    <h3>Reservation List</h3>
+    {% if reservations %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Equipment</th>
+                    <th>Reserved By</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for date, res_list in reservations.items() %}
+                    {% for res in res_list %}
+                        <tr>
+                            <td>{{ date }}</td>
+                            <td>{{ res.equipment }}</td>
+                            <td>{{ res.user }}</td>
+                            <td>
+                                {% if is_admin or res.user == user_id %}
+                                    <form method="POST" action="{{ url_for('remove_reservation', user_id=user_id) }}">
+                                        <input type="hidden" name="date" value="{{ date }}">
+                                        <input type="hidden" name="equipment" value="{{ res.equipment }}">
+                                        <button type="submit">Remove</button>
+                                    </form>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No reservations yet.</p>
+    {% endif %}
+    <br>
+    <a href="{{ url_for('dashboard', user_id=user_id) }}">Back to Dashboard</a>
+    <!-- FullCalendar JS -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js'></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -44,25 +73,10 @@
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 height: 600,
-                events: {{ calendar_events|tojson }}
+                events: {{ calendar_events | tojson }}
             });
             calendar.render();
         });
     </script>
-
-    <script>
-        const form = document.querySelector('form');
-        form.addEventListener('submit', function (e) {
-            const start = new Date(form.start_date.value);
-            const end = new Date(form.end_date.value);
-            if (end < start) {
-                e.preventDefault();
-                alert("End date must be the same or after the start date.");
-            }
-        });
-    </script>
-
-    <br>
-    <a href="{{ url_for('dashboard', user_id=user_id) }}">Back to Dashboard</a>
 </body>
 </html>

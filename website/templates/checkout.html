@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout {{ equipment_type }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h2>Checkout: {{ equipment_type }}</h2>
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    {% if success %}
+        <p style="color: green;">{{ success }}</p>
+    {% endif %}
+
+    {% if max_days > 0 %}
+    <form method="POST">
+        <label for="days">Select number of days (max {{ max_days }}):</label>
+        <input type="number" name="days" min="1" max="{{ max_days }}" required>
+        <br><br>
+        <button type="submit">Confirm Checkout</button>
+    </form>
+    {% else %}
+        <p>No checkout period available due to upcoming reservations.</p>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('dashboard', user_id=user_id) }}">Back to Dashboard</a>
+</body>
+</html>
