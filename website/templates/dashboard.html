@@ -22,6 +22,7 @@
                 <th>Quantity</th>
                 <th>Reserve</th>
                 <th>Checkout</th>
+                <th>checkin</th>
                 
             </tr>
         </thread>
@@ -44,6 +45,11 @@
                                 —
                             {% endif %}
                         </td>
+                        <td>
+                            <form method="POST" action="{{ url_for('checkin_equipment', user_id=user_id, equipment_type=item.type) }}">
+                                <button type="submit">Check In</button>
+                            </form>
+                        </td>                        
                         <td>
                             {% if is_admin %}
                                 <a href="{{ url_for('remove_equipment', user_id=user_id, id=item.id) }}">Remove</a>
