@@ -110,19 +110,38 @@ def dashboard(user_id):
 
 @app.route('/admin/<user_id>', methods=['GET', 'POST'])
 def admin_panel(user_id):
-    # Verify the user is an admin
     current_user = next((u for u in login_database.values() if u["id"] == user_id), None)
     if not current_user or not current_user["admin"]:
         return "Unauthorized", 403
-
     if request.method == 'POST':
         target_username = request.form.get('username')
         action = request.form.get('action')
-
         if target_username in login_database and target_username != current_user["username"]:
             login_database[target_username]["admin"] = (action == "promote")
-
-    return render_template("admin.html", user_id=user_id, users=login_database)
+    # Flatten equipment history
+    history_log = []
+    for equipment_type, logs in equipment_history.items():
+        for record in logs:
+            history_log.append({
+                "user": record["user"],
+                "equipment": equipment_type,
+                "date": record["date"],
+                "status": record["status"]
+            })
+    # Flatten reservation log
+    reservation_log = []
+    for date, reservations in reservations_database.items():
+        for res in reservations:
+            reservation_log.append({
+                "user": res["user"],
+                "equipment": res["equipment"],
+                "date": date,
+                "status": "Reserved"
+            })
+    # Combine for full activity log
+    combined_log = history_log + reservation_log
+    combined_log.sort(key=lambda x: x["date"], reverse=True)
+    return render_template("admin.html", user_id=user_id, users=login_database, log=combined_log)
 
 
 @app.route('/admin/generate_pdf/<user_id>', methods=['POST'])
@@ -248,10 +267,11 @@ def equipment_detail(user_id, equipment_type):
 
 @app.route('/reservations/<user_id>', methods=['GET', 'POST'])
 def reservations(user_id):
-    user = next((user for user in login_database.values() if user["id"] == user_id), None)
+    user = next((u for u in login_database.values() if u["id"] == user_id), None)
     if not user:
         return "User not found", 404
-
+    is_admin = user["admin"]
+    # Convert to FullCalendar-compatible format
     events = []
     for date_str, res_list in reservations_database.items():
         for res in res_list:
@@ -259,12 +279,21 @@ def reservations(user_id):
                 "title": f"{res['equipment']} ({res['user']})",
                 "start": date_str
             })
-
+    # Filter table data for regular users
+    if is_admin:
+        table_reservations = reservations_database
+    else:
+        table_reservations = {}
+        for date, res_list in reservations_database.items():
+            user_res = [r for r in res_list if r["user"] == user_id]
+            if user_res:
+                table_reservations[date] = user_res
     return render_template(
         'reservations.html',
         user_id=user_id,
+        is_admin=is_admin,
         equipment=equipment_database,
-        reservations=reservations_database,
+        reservations=table_reservations,
         calendar_events=events
     )
 

@@ -57,6 +57,28 @@
         <button type="submit">Download PDF Report</button>
     </form>
 
+    <h2>Activity Log (Reservations, Checkouts, Returns)</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Equipment</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in log %}
+                <tr>
+                    <td>{{ entry.user }}</td>
+                    <td>{{ entry.equipment }}</td>
+                    <td>{{ entry.date }}</td>
+                    <td>{{ entry.status }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
     <br><br>
     <a href="{{ url_for('dashboard', user_id=user_id) }}">Back to Dashboard</a>
 </body>

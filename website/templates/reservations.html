@@ -45,7 +45,7 @@
                             <td>{{ res.equipment }}</td>
                             <td>{{ res.user }}</td>
                             <td>
-                                {% if res.user == user_id %}
+                                {% if is_admin or res.user == user_id %}
                                     <form method="POST" action="{{ url_for('remove_reservation', user_id=user_id) }}">
                                         <input type="hidden" name="date" value="{{ date }}">
                                         <input type="hidden" name="equipment" value="{{ res.equipment }}">
