@@ -332,12 +332,13 @@ def remove_reservation(user_id):
     equipment_type = request.form.get('equipment')
     if not date or not equipment_type:
         return "Missing required fields", 400
-
     if date in reservations_database:
-        reservations_database[date] = [res for res in reservations_database[date] if not (res["equipment"] == equipment_type and res["user"] == user_id)]
+        reservations_database[date] = [
+            res for res in reservations_database[date]
+            if not (res["equipment"] == equipment_type and res["user"] == user_id)
+        ]
         if not reservations_database[date]:
             del reservations_database[date]
-
     return redirect(url_for('reservations', user_id=user_id))
 
 
@@ -422,6 +423,42 @@ def checkout_equipment(user_id, equipment_type):
         return render_template("checkout.html", user_id=user_id, equipment_type=equipment_type, max_days=0, success=success_message)
 
     return render_template("checkout.html", user_id=user_id, equipment_type=equipment_type, max_days=max_days)
+
+
+@app.route('/checkin/<user_id>/<equipment_type>', methods=['POST'])
+def checkin_equipment(user_id, equipment_type):
+    user = next((u for u in login_database.values() if u["id"] == user_id), None)
+    if not user:
+        return "User not found", 404
+    username = user["username"]
+    today = datetime.today().date()
+    returned_any = False
+    for i in range(7):
+        check_date = (today + timedelta(days=i)).strftime("%Y-%m-%d")
+        res_list = reservations_database.get(check_date, [])
+        new_res_list = []
+        for res in res_list:
+            if res["equipment"] == equipment_type and res["user"] == user_id:
+                returned_any = True
+                # Add to equipment history
+                if equipment_type not in equipment_history:
+                    equipment_history[equipment_type] = []
+                equipment_history[equipment_type].append({
+                    "user": username,
+                    "date": check_date,
+                    "status": "Returned to Inventory"
+                })
+                # Don't keep the reservation (it's returned)
+            else:
+                new_res_list.append(res)
+        if new_res_list:
+            reservations_database[check_date] = new_res_list
+        else:
+            reservations_database.pop(check_date, None)
+    if returned_any:
+        return redirect(url_for('dashboard', user_id=user_id))
+    else:
+        return "You cannot check in this equipment — it is not checked out under your account.", 403
 
 
 if __name__ == '__main__':
