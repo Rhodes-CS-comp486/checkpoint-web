@@ -10,10 +10,32 @@ import secrets
 
 app = Flask(__name__)
 
-API_BASE_URL = "http://localhost:8000"
+#API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = "http://10.20.47.145:8000/" #connection to jewels computer
 app.secret_key = secrets.token_hex(32)
 
 
+def get_user(user_id):
+    res = requests.get(f"{API_BASE_URL}/users/{user_id}")
+    return res.json() if res.status_code == 200 else None
+
+def get_users():
+    res = requests.get(f"{API_BASE_URL}/users")
+    return res.json() if res.status_code == 200 else []
+
+def get_equipment():
+    res = requests.get(f"{API_BASE_URL}/equipment")
+    return res.json() if res.status_code == 200 else []
+
+def get_reservations():
+    res = requests.get(f"{API_BASE_URL}/reservations")
+    return res.json() if res.status_code == 200 else {}
+
+def get_equipment_history(equipment_type):
+    res = requests.get(f"{API_BASE_URL}/equipment_history/{equipment_type}")
+    return res.json() if res.status_code == 200 else []
+
+"""
 # Hardcoded user data
 login_database = {
     "user1": {"id": str(uuid.uuid4()), "username": "user1", "password": "password123", "admin": False},
@@ -59,6 +81,8 @@ equipment_history = {
 
 reservations_database = {}
 
+""" #Hardcoded equipment data
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -72,7 +96,6 @@ def register():
         email = request.form.get('email')
         full_name = request.form.get('full_name')      
 
-
         user_data = {
             "username": username,
             "email": email,
@@ -82,10 +105,8 @@ def register():
             "admin": False
         }
 
-        # Send the request to the backend API
         response = requests.put(f"{API_BASE_URL}/users/", json=user_data)
 
-        # Handle the response
         if response.status_code == 200:
             return render_template('register.html', success="User registered successfully")
         elif response.status_code == 422:
@@ -102,28 +123,24 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-
-        # API expects form-encoded data, not JSON
-        data = {
-            "username": username,
-            "password": password
-        }
+        data = {"username": username, "password": password}
 
         try:
             response = requests.post(f"{API_BASE_URL}/token", data=data)
-            response.raise_for_status()  # Raises error for 4xx/5xx responses
+            response.raise_for_status()
 
-            # If login is successful, backend should return an access token and user ID
             response_data = response.json()
             token = response_data.get("access_token")
-            user_id = response_data.get("user_id")  # Assuming user_id is returned from the API
+            user_id = response_data.get("user_id")
 
             if token and user_id:
-                # Store token and user_id in session
                 session["token"] = token
                 session["user_id"] = user_id
 
-                # Redirect to dashboard, passing user_id as a URL parameter
+                user = get_user(user_id)
+                if not user:
+                    return render_template('login.html', error="User not found")
+
                 return redirect(url_for('dashboard', user_id=user_id))
             else:
                 return render_template('login.html', error="Invalid credentials")
@@ -135,29 +152,34 @@ def login():
 
 @app.route('/admin/<user_id>', methods=['GET', 'POST'])
 def admin_panel(user_id):
-    # Verify the user is an admin
-    current_user = next((u for u in login_database.values() if u["id"] == user_id), None)
+    current_user = get_user(user_id)
     if not current_user or not current_user["admin"]:
         return "Unauthorized", 403
 
     if request.method == 'POST':
         target_username = request.form.get('username')
         action = request.form.get('action')
+        users = get_users()
+        target_user = next((u for u in users if u["username"] == target_username), None)
 
-        if target_username in login_database and target_username != current_user["username"]:
-            login_database[target_username]["admin"] = (action == "promote")
+        if target_user and target_user["username"] != current_user["username"]:
+            target_user["admin"] = (action == "promote")
+            requests.put(f"{API_BASE_URL}/users/{target_user['user_id']}", json=target_user)
 
-    return render_template("admin.html", user_id=user_id, users=login_database)
+    return render_template("admin.html", user_id=user_id, users=get_users())
 
 
 @app.route('/dashboard/<user_id>')
 def dashboard(user_id):
-    user = next((u for u in login_database.values() if u["id"] == user_id), None)
+    user = get_user(user_id)
     if not user:
         return "User not found", 404
 
     username = user["username"]
     is_admin = user["admin"]
+
+    equipment_database = get_equipment()
+    reservations_database = get_reservations()
 
     today_str = datetime.today().strftime("%Y-%m-%d")
     reserved_today = set(res["equipment"] for res in reservations_database.get(today_str, []))
@@ -170,41 +192,40 @@ def dashboard(user_id):
 
 @app.route('/admin/generate_pdf/<user_id>', methods=['POST'])
 def generate_pdf(user_id):
-    current_user = next((u for u in login_database.values() if u["id"] == user_id), None)
+    current_user = get_user(user_id)
     if not current_user or not current_user["admin"]:
         return "Unauthorized", 403
 
     report_type = request.form.get('report_type')
     selected_value = request.form.get('selected_value')
-
     report_data = []
 
     if report_type == "user":
+        users = get_users()
         username = selected_value
-        for equipment_type, records in equipment_history.items():
-            for record in records:
+        for equipment in get_equipment():
+            history = get_equipment_history(equipment["type"])
+            for record in history:
                 if record["user"] == username:
-                    report_data.append((record["user"], equipment_type, record["date"], record["status"]))
+                    report_data.append((record["user"], equipment["type"], record["date"], record["status"]))
 
     elif report_type == "equipment":
-        equipment_type = selected_value
-        for record in equipment_history.get(equipment_type, []):
-            report_data.append((record["user"], equipment_type, record["date"], record["status"]))
+        history = get_equipment_history(selected_value)
+        for record in history:
+            report_data.append((record["user"], selected_value, record["date"], record["status"]))
 
     elif report_type == "all_users":
-        for equipment_type, records in equipment_history.items():
-            for record in records:
-                report_data.append((record["user"], equipment_type, record["date"], record["status"]))
+        for equipment in get_equipment():
+            history = get_equipment_history(equipment["type"])
+            for record in history:
+                report_data.append((record["user"], equipment["type"], record["date"], record["status"]))
 
-    # Generate PDF using ReportLab
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
-
     pdf.setFont("Helvetica-Bold", 14)
     pdf.drawString(200, height - 40, "Usage History Report")
     pdf.setFont("Helvetica", 10)
-
     y = height - 80
     pdf.drawString(50, y, "User")
     pdf.drawString(150, y, "Equipment")
@@ -213,7 +234,7 @@ def generate_pdf(user_id):
     y -= 20
 
     for user, equip, date, status in report_data:
-        if y < 50:  # new page if not enough space
+        if y < 50:
             pdf.showPage()
             y = height - 50
         pdf.drawString(50, y, user)
@@ -224,13 +245,12 @@ def generate_pdf(user_id):
 
     pdf.save()
     buffer.seek(0)
-
     return send_file(buffer, as_attachment=True, download_name="usage_report.pdf", mimetype='application/pdf')
 
 
 @app.route('/add_equipment/<user_id>', methods=['GET', 'POST'])
 def add_equipment(user_id):
-    user = next((user for user in login_database.values() if user["id"] == user_id), None)
+    user = get_user(user_id)
     if not user:
         return "User not found", 404
 
@@ -243,13 +263,11 @@ def add_equipment(user_id):
             return render_template('add_equipment.html', user_id=user_id, error="All fields are required.")
 
         new_equipment = {
-            'id': str(uuid.uuid4()),
             'type': equipment_type,
             'description': description,
-            'availability': True,  # default to available
             'quality': quality
         }
-        equipment_database.append(new_equipment)
+        requests.post(f"{API_BASE_URL}/equipment", json=new_equipment)
         return redirect(url_for('dashboard', user_id=user_id))
 
     return render_template('add_equipment.html', user_id=user_id)
@@ -257,17 +275,18 @@ def add_equipment(user_id):
 
 @app.route('/remove_equipment/<user_id>', methods=['GET', 'POST'])
 def remove_equipment(user_id):
-    user = next((user for user in login_database.values() if user["id"] == user_id), None)
+    user = get_user(user_id)
     if not user:
         return "User not found", 404
 
+    equipment_database = get_equipment()
+
     if request.method == 'POST':
         id_to_remove = request.form.get('id')
-        global equipment_database
         if not any(item['id'] == id_to_remove for item in equipment_database):
             return render_template('remove_equipment.html', user_id=user_id, equipment=equipment_database, error="Equipment not found.")
 
-        equipment_database = [item for item in equipment_database if item['id'] != id_to_remove]
+        requests.delete(f"{API_BASE_URL}/equipment/{id_to_remove}")
         return redirect(url_for('dashboard', user_id=user_id))
 
     selected_id = request.args.get('id')
@@ -276,12 +295,13 @@ def remove_equipment(user_id):
 
 @app.route('/equipment_history/<user_id>/<equipment_type>')
 def equipment_detail(user_id, equipment_type):
-    user = next((user for user in login_database.values() if user["id"] == user_id), None)
+    user = get_user(user_id)
     if not user:
         return "User not found", 404
 
+    equipment_database = get_equipment()
     equipment_info = next((item for item in equipment_database if item["type"] == equipment_type), None)
-    history = equipment_history.get(equipment_type, [])
+    history = get_equipment_history(equipment_type)
 
     if not equipment_info:
         return "Equipment not found", 404
@@ -289,11 +309,14 @@ def equipment_detail(user_id, equipment_type):
     return render_template('equipment.html', user_id=user_id, equipment=equipment_info, history=history)
 
 
-@app.route('/reservations/<user_id>', methods=['GET', 'POST'])
+@app.route('/reservations/<user_id>')
 def reservations(user_id):
-    user = next((user for user in login_database.values() if user["id"] == user_id), None)
+    user = get_user(user_id)
     if not user:
         return "User not found", 404
+
+    equipment_database = get_equipment()
+    reservations_database = get_reservations()
 
     events = []
     for date_str, res_list in reservations_database.items():
@@ -303,13 +326,7 @@ def reservations(user_id):
                 "start": date_str
             })
 
-    return render_template(
-        'reservations.html',
-        user_id=user_id,
-        equipment=equipment_database,
-        reservations=reservations_database,
-        calendar_events=events
-    )
+    return render_template('reservations.html', user_id=user_id, equipment=equipment_database, reservations=reservations_database, calendar_events=events)
 
 
 @app.route('/make_reservation/<user_id>', methods=['POST'])
@@ -330,7 +347,7 @@ def make_reservation(user_id):
     if start > end:
         return "Start date must be before or equal to end date", 400
 
-    # Check for overlapping reservations
+    reservations_database = get_reservations()
     current = start
     while current <= end:
         date_str = current.strftime("%Y-%m-%d")
@@ -339,71 +356,73 @@ def make_reservation(user_id):
                 return f"{equipment_type} is already reserved on {date_str}", 400
         current += timedelta(days=1)
 
-    # Add reservation and history records
+    user = get_user(user_id)
+    if not user:
+        return "User not found", 404
+
+    username = user["username"]
     current = start
     while current <= end:
         date_str = current.strftime("%Y-%m-%d")
 
-        # Add to reservations
-        if date_str not in reservations_database:
-            reservations_database[date_str] = []
-        reservations_database[date_str].append({
+        reservation_data = {
+            "user_id": user_id,
             "equipment": equipment_type,
-            "user": user_id
-        })
+            "start_date": date_str,
+            "end_date": date_str
+        }
+        history_data = {
+            "equipment_type": equipment_type,
+            "user": username,
+            "date": date_str,
+            "status": "Reserved"
+        }
 
-        # Get username and add to equipment history
-        user = next((u for u in login_database.values() if u["id"] == user_id), None)
-        if user:
-            username = user["username"]
-            if equipment_type not in equipment_history:
-                equipment_history[equipment_type] = []
-            equipment_history[equipment_type].append({
-                "user": username,
-                "date": date_str,
-                "status": "Reserved"
-            })
+        requests.post(f"{API_BASE_URL}/reservations", json=reservation_data)
+        requests.post(f"{API_BASE_URL}/equipment_history", json=history_data)
 
         current += timedelta(days=1)
 
     return redirect(url_for('reservations', user_id=user_id))
 
 
+
 @app.route('/remove_reservation/<user_id>', methods=['POST'])
 def remove_reservation(user_id):
-    date = request.form.get('date')
-    equipment_type = request.form.get('equipment')
-    if not date or not equipment_type:
-        return "Missing required fields", 400
+    user = get_user(user_id)
+    if not user:
+        return "User not found", 404
 
-    if date in reservations_database:
-        reservations_database[date] = [res for res in reservations_database[date] if not (res["equipment"] == equipment_type and res["user"] == user_id)]
-        if not reservations_database[date]:
-            del reservations_database[date]
-
+    data = {
+        "user_id": user_id,
+        "equipment": request.form.get('equipment'),
+        "date": request.form.get('date')
+    }
+    res = requests.delete(f"{API_BASE_URL}/reservations", json=data)
+    if res.status_code != 200:
+        return res.text, res.status_code
     return redirect(url_for('reservations', user_id=user_id))
 
 
 @app.route('/user_history/<user_id>')
 def user_history(user_id):
-    user = next((user for user in login_database.values() if user["id"] == user_id), None)
+    user = get_user(user_id)
     if not user:
         return "User not found", 404
 
     username = user["username"]
     user_transactions = []
+    equipment_database = get_equipment()
 
-    for equipment_type, records in equipment_history.items():
-        for record in records:
+    for item in equipment_database:
+        history = get_equipment_history(item["type"])
+        for record in history:
             if record["user"] == username:
-                equipment_info = next((item for item in equipment_database if item["type"] == equipment_type), None)
-                availability = equipment_info["availability"] if equipment_info else "Unknown"
-
                 user_transactions.append({
-                    "equipment_type": equipment_type,
+                    "equipment_type": item["type"],
                     "date": record["date"],
                     "status": record["status"],
-                    "availability": availability
+                    "availability": item.get("availability", "Unknown")
                 })
 
     return render_template('user_history.html', username=username, user_id=user_id, history=user_transactions)
@@ -411,7 +430,7 @@ def user_history(user_id):
 
 @app.route('/checkout/<user_id>/<equipment_type>', methods=['GET', 'POST'])
 def checkout_equipment(user_id, equipment_type):
-    user = next((u for u in login_database.values() if u["id"] == user_id), None)
+    user = get_user(user_id)
     if not user:
         return "User not found", 404
 
@@ -419,7 +438,8 @@ def checkout_equipment(user_id, equipment_type):
     today = datetime.today().date()
     max_days = 7
 
-    # Check for reservation conflicts in the next 7 days
+    reservations_database = get_reservations()
+
     for i in range(1, 8):
         check_date = (today + timedelta(days=i)).strftime("%Y-%m-%d")
         for res in reservations_database.get(check_date, []):
@@ -438,24 +458,16 @@ def checkout_equipment(user_id, equipment_type):
         if days < 1 or days > max_days:
             return render_template("checkout.html", user_id=user_id, equipment_type=equipment_type, max_days=max_days, error=f"You can only check out for up to {max_days} day(s) without interfering with existing reservations.")
 
-        # Proceed with checkout
         for i in range(days):
             checkout_date = (today + timedelta(days=i)).strftime("%Y-%m-%d")
-
-            # Add to reservations to block reservation system
-            if checkout_date not in reservations_database:
-                reservations_database[checkout_date] = []
-
-            reservations_database[checkout_date].append({
+            requests.post(f"{API_BASE_URL}/reservations", json={
+                "user_id": user_id,
                 "equipment": equipment_type,
-                "user": user_id
+                "start_date": checkout_date,
+                "end_date": checkout_date
             })
-
-            # Add to equipment history
-            if equipment_type not in equipment_history:
-                equipment_history[equipment_type] = []
-
-            equipment_history[equipment_type].append({
+            requests.post(f"{API_BASE_URL}/equipment_history", json={
+                "equipment_type": equipment_type,
                 "user": username,
                 "date": checkout_date,
                 "status": "Checked Out"
