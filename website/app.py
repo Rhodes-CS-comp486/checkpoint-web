@@ -123,6 +123,7 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+
         data = {"username": username, "password": password}
 
         try:
@@ -133,6 +134,9 @@ def login():
             token = response_data.get("access_token")
             user_id = response_data.get("user_id")
 
+            #there is an issue with how the user_id is being returned from the API. 
+            #I left the if only checking for the token and it worked but it couldn't find the user_id
+            #we need to do something to get the user_id from the token i think this is an our end problem
             if token and user_id:
                 session["token"] = token
                 session["user_id"] = user_id
