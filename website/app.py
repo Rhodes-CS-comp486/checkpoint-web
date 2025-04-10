@@ -10,8 +10,8 @@ import secrets
 
 app = Flask(__name__)
 
-#API_BASE_URL = "http://localhost:8000"
-API_BASE_URL = "http://10.20.47.145:8000/" #connection to jewels computer
+API_BASE_URL = "http://localhost:8000"
+#API_BASE_URL = "http://10.20.47.145:8000/" #connection to Jules computer
 app.secret_key = secrets.token_hex(32)
 
 
