@@ -10,8 +10,8 @@ import secrets
 
 app = Flask(__name__)
 
-API_BASE_URL = "http://localhost:8000"
-#API_BASE_URL = "http://10.20.47.145:8000/" #connection to Jules computer
+#API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = "http://10.20.47.145:8000/" #connection to Jules computer
 app.secret_key = secrets.token_hex(32)
 
 
@@ -132,12 +132,18 @@ def login():
 
             response_data = response.json()
             token = response_data.get("access_token")
-            user_id = response_data.get("user_id")
+            user_id = token.user_id
+            user_id = int(user_id)
+            '''
+            AttributeError
+AttributeError: 'str' object has no attribute 'user_id'
+            '''
 
+            print(user_id)
             #there is an issue with how the user_id is being returned from the API. 
             #I left the if only checking for the token and it worked but it couldn't find the user_id
             #we need to do something to get the user_id from the token i think this is an our end problem
-            if token and user_id:
+            if token:# and user_id:
                 session["token"] = token
                 session["user_id"] = user_id
 
