@@ -8,12 +8,13 @@
 <body>
     <h2>Admin Panel - Manage Users</h2>
 
+    <!-- Promote/Demote Users -->
     <table border="1">
         <thead>
             <tr>
                 <th>Username</th>
                 <th>Is Admin?</th>
-                <th>Action</th>
+                <th>Promote/Demote</th>
             </tr>
         </thead>
         <tbody>
@@ -22,10 +23,7 @@
                     <td>{{ username }}</td>
                     <td>{{ 'Yes' if user.admin else 'No' }}</td>
                     <td>
-                        {% if username != users[username]['username'] %}
-                            <!-- prevent self-promotion/demotion -->
-                            —
-                        {% else %}
+                        {% if username != 'admin' %}
                             <form method="POST" style="display: inline;">
                                 <input type="hidden" name="username" value="{{ username }}">
                                 <input type="hidden" name="action" value="{{ 'demote' if user.admin else 'promote' }}">
@@ -33,15 +31,18 @@
                                     {{ 'Demote to User' if user.admin else 'Promote to Admin' }}
                                 </button>
                             </form>
+                        {% else %}
+                            —
                         {% endif %}
                     </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-    
+
     <br><br>
 
+    <!-- PDF Report Generator -->
     <h2>Generate Usage Report (PDF)</h2>
     <form method="POST" action="{{ url_for('generate_pdf', user_id=user_id) }}">
         <label for="report_type">Select Report Type:</label><br>
@@ -51,12 +52,40 @@
             <option value="all_users">All Users</option>
         </select><br><br>
 
-        <label for="selected_value">Enter Username or Equipment Name (leave blank for 'All Users'):</label><br>
+        <label for="selected_value">Enter Username or Equipment (leave blank for All Users):</label><br>
         <input type="text" name="selected_value" placeholder="e.g. user1 or computer1"><br><br>
 
         <button type="submit">Download PDF Report</button>
     </form>
 
+    <br><br>
+
+    <!-- User Information Table -->
+    <h2>User Information</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Admin?</th>
+                <th>View Info</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for username, user in users.items() %}
+                <tr>
+                    <td>{{ username }}</td>
+                    <td>{{ 'Yes' if user.admin else 'No' }}</td>
+                    <td>
+                        <a href="{{ url_for('admin_user_details', admin_id=user_id, target_user_id=user.id) }}">View Info</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br><br>
+
+    <!-- Full System Activity Log -->
     <h2>Activity Log (Reservations, Checkouts, Returns)</h2>
     <table border="1">
         <thead>
@@ -79,7 +108,7 @@
         </tbody>
     </table>
 
-    <br><br>
+    <br>
     <a href="{{ url_for('dashboard', user_id=user_id) }}">Back to Dashboard</a>
 </body>
 </html>

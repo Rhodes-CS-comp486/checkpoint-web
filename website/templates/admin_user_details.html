@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Info - {{ username }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h2>User Info: {{ username }}</h2>
+
+    <p><strong>Username:</strong> {{ username }}</p>
+    <p><strong>Password:</strong> {{ password }}</p>
+    <p><strong>Admin:</strong> {{ 'Yes' if is_admin else 'No' }}</p>
+
+    <h3>Activity History</h3>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Equipment</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in history %}
+                <tr>
+                    <td>{{ entry.equipment }}</td>
+                    <td>{{ entry.date }}</td>
+                    <td>{{ entry.status }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br>
+    <a href="{{ url_for('admin_panel', user_id=admin_id) }}">Back to Admin Panel</a>
+</body>
+</html>

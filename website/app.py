@@ -113,11 +113,14 @@ def admin_panel(user_id):
     current_user = next((u for u in login_database.values() if u["id"] == user_id), None)
     if not current_user or not current_user["admin"]:
         return "Unauthorized", 403
+
     if request.method == 'POST':
         target_username = request.form.get('username')
         action = request.form.get('action')
+
         if target_username in login_database and target_username != current_user["username"]:
             login_database[target_username]["admin"] = (action == "promote")
+
     # Flatten equipment history
     history_log = []
     for equipment_type, logs in equipment_history.items():
@@ -128,6 +131,7 @@ def admin_panel(user_id):
                 "date": record["date"],
                 "status": record["status"]
             })
+
     # Flatten reservation log
     reservation_log = []
     for date, reservations in reservations_database.items():
@@ -138,10 +142,64 @@ def admin_panel(user_id):
                 "date": date,
                 "status": "Reserved"
             })
-    # Combine for full activity log
+
+    # Combine and sort
     combined_log = history_log + reservation_log
     combined_log.sort(key=lambda x: x["date"], reverse=True)
+
     return render_template("admin.html", user_id=user_id, users=login_database, log=combined_log)
+
+
+@app.route('/admin/user_details/<admin_id>/<target_user_id>')
+def admin_user_details(admin_id, target_user_id):
+    # Verify current user is admin
+    admin = next((u for u in login_database.values() if u["id"] == admin_id), None)
+    if not admin or not admin["admin"]:
+        return "Unauthorized", 403
+
+    # Get the target user
+    target_user = next((u for u in login_database.values() if u["id"] == target_user_id), None)
+    if not target_user:
+        return "User not found", 404
+
+    target_username = target_user["username"]
+    target_password = target_user["password"]
+    target_is_admin = target_user["admin"]
+
+    # Compile history
+    user_history = []
+
+    # From equipment history
+    for equipment_type, logs in equipment_history.items():
+        for record in logs:
+            if record["user"] == target_username:
+                user_history.append({
+                    "equipment": equipment_type,
+                    "date": record["date"],
+                    "status": record["status"]
+                })
+
+    # From reservations
+    for date, reservations in reservations_database.items():
+        for res in reservations:
+            if res["user"] == target_user_id:
+                user_history.append({
+                    "equipment": res["equipment"],
+                    "date": date,
+                    "status": "Reserved"
+                })
+
+    # Sort by date
+    user_history.sort(key=lambda x: x["date"], reverse=True)
+
+    return render_template(
+        'admin_user_details.html',
+        admin_id=admin_id,
+        username=target_username,
+        password=target_password,
+        is_admin=target_is_admin,
+        history=user_history
+    )
 
 
 @app.route('/admin/generate_pdf/<user_id>', methods=['POST'])
@@ -270,8 +328,9 @@ def reservations(user_id):
     user = next((u for u in login_database.values() if u["id"] == user_id), None)
     if not user:
         return "User not found", 404
+
     is_admin = user["admin"]
-    # Convert to FullCalendar-compatible format
+
     events = []
     for date_str, res_list in reservations_database.items():
         for res in res_list:
@@ -279,7 +338,7 @@ def reservations(user_id):
                 "title": f"{res['equipment']} ({res['user']})",
                 "start": date_str
             })
-    # Filter table data for regular users
+
     if is_admin:
         table_reservations = reservations_database
     else:
@@ -288,6 +347,7 @@ def reservations(user_id):
             user_res = [r for r in res_list if r["user"] == user_id]
             if user_res:
                 table_reservations[date] = user_res
+
     return render_template(
         'reservations.html',
         user_id=user_id,
@@ -359,15 +419,32 @@ def make_reservation(user_id):
 def remove_reservation(user_id):
     date = request.form.get('date')
     equipment_type = request.form.get('equipment')
+
     if not date or not equipment_type:
         return "Missing required fields", 400
+
+    user = next((u for u in login_database.values() if u["id"] == user_id), None)
+    if not user:
+        return "User not found", 404
+    is_admin = user["admin"]
+
     if date in reservations_database:
-        reservations_database[date] = [
-            res for res in reservations_database[date]
-            if not (res["equipment"] == equipment_type and res["user"] == user_id)
-        ]
+        if is_admin:
+            # Admin can remove any reservation for that equipment/date
+            reservations_database[date] = [
+                res for res in reservations_database[date]
+                if res["equipment"] != equipment_type
+            ]
+        else:
+            # Regular user can only remove their own
+            reservations_database[date] = [
+                res for res in reservations_database[date]
+                if not (res["equipment"] == equipment_type and res["user"] == user_id)
+            ]
+
         if not reservations_database[date]:
             del reservations_database[date]
+
     return redirect(url_for('reservations', user_id=user_id))
 
 
@@ -460,16 +537,19 @@ def checkin_equipment(user_id, equipment_type):
     if not user:
         return "User not found", 404
     username = user["username"]
+
     today = datetime.today().date()
     returned_any = False
+
     for i in range(7):
         check_date = (today + timedelta(days=i)).strftime("%Y-%m-%d")
         res_list = reservations_database.get(check_date, [])
+
         new_res_list = []
         for res in res_list:
             if res["equipment"] == equipment_type and res["user"] == user_id:
                 returned_any = True
-                # Add to equipment history
+                # Add return record
                 if equipment_type not in equipment_history:
                     equipment_history[equipment_type] = []
                 equipment_history[equipment_type].append({
@@ -477,13 +557,14 @@ def checkin_equipment(user_id, equipment_type):
                     "date": check_date,
                     "status": "Returned to Inventory"
                 })
-                # Don't keep the reservation (it's returned)
             else:
                 new_res_list.append(res)
+
         if new_res_list:
             reservations_database[check_date] = new_res_list
         else:
             reservations_database.pop(check_date, None)
+
     if returned_any:
         return redirect(url_for('dashboard', user_id=user_id))
     else:
