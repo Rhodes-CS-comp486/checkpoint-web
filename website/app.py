@@ -1,9 +1,11 @@
+import qrcode
 from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file
 from datetime import datetime, timedelta
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from io import BytesIO
 import uuid
+
 
 app = Flask(__name__)
 
@@ -147,7 +149,7 @@ def admin_panel(user_id):
     combined_log = history_log + reservation_log
     combined_log.sort(key=lambda x: x["date"], reverse=True)
 
-    return render_template("admin.html", user_id=user_id, users=login_database, log=combined_log)
+    return render_template("admin.html", user_id=user_id, users=login_database, log=combined_log, equipment=equipment_database)
 
 
 @app.route('/admin/user_details/<admin_id>/<target_user_id>')
@@ -200,6 +202,38 @@ def admin_user_details(admin_id, target_user_id):
         is_admin=target_is_admin,
         history=user_history
     )
+
+
+@app.route('/admin/qrcode/<user_id>/<equipment_type>')
+def generate_equipment_qrcode(user_id, equipment_type):
+    # Check admin permissions
+    user = next((u for u in login_database.values() if u["id"] == user_id), None)
+    if not user or not user["admin"]:
+        return "Unauthorized", 403
+
+    # Get equipment info
+    equipment = next((e for e in equipment_database if e["type"] == equipment_type), None)
+    if not equipment:
+        return "Equipment not found", 404
+
+    description = equipment["description"]
+    type_name = equipment["type"]
+
+    # Get checkout dates from equipment_history
+    history = equipment_history.get(equipment_type, [])
+    checkout_dates = [record["date"] for record in history if record["status"] == "Checked Out"]
+    checkout_list = ', '.join(sorted(checkout_dates))
+
+    # Build QR text
+    qr_text = f"Equipment: {type_name}\nDescription: {description}\nChecked Out On:\n{checkout_list}"
+
+    # Generate QR
+    img = qrcode.make(qr_text)
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+
+    return send_file(buffer, mimetype='image/png', download_name=f"{equipment_type}_qr.png")
 
 
 @app.route('/admin/generate_pdf/<user_id>', methods=['POST'])

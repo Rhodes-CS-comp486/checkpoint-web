@@ -85,6 +85,31 @@
 
     <br><br>
 
+    <!-- QR Code Generator for Equipment -->
+    <h2>QR Code Generator for Equipment</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Equipment Type</th>
+                <th>Description</th>
+                <th>Generate QR Code</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in equipment %}
+                <tr>
+                    <td>{{ item.type }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>
+                        <a href="{{ url_for('generate_equipment_qrcode', user_id=user_id, equipment_type=item.type) }}" target="_blank">
+                            Generate QR
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
     <!-- Full System Activity Log -->
     <h2>Activity Log (Reservations, Checkouts, Returns)</h2>
     <table border="1">
