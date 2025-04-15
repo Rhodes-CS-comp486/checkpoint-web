@@ -206,29 +206,21 @@ def admin_user_details(admin_id, target_user_id):
 
 @app.route('/admin/qrcode/<user_id>/<equipment_type>')
 def generate_equipment_qrcode(user_id, equipment_type):
-    # Check admin permissions
+    # Confirm admin access
     user = next((u for u in login_database.values() if u["id"] == user_id), None)
     if not user or not user["admin"]:
         return "Unauthorized", 403
 
-    # Get equipment info
+    # Check if the equipment exists
     equipment = next((e for e in equipment_database if e["type"] == equipment_type), None)
     if not equipment:
         return "Equipment not found", 404
 
-    description = equipment["description"]
-    type_name = equipment["type"]
+    # Generate checkout URL (external URL)
+    checkout_url = url_for('checkout_equipment', user_id=user_id, equipment_type=equipment_type, _external=True)
 
-    # Get checkout dates from equipment_history
-    history = equipment_history.get(equipment_type, [])
-    checkout_dates = [record["date"] for record in history if record["status"] == "Checked Out"]
-    checkout_list = ', '.join(sorted(checkout_dates))
-
-    # Build QR text
-    qr_text = f"Equipment: {type_name}\nDescription: {description}\nChecked Out On:\n{checkout_list}"
-
-    # Generate QR
-    img = qrcode.make(qr_text)
+    # Create QR code image
+    img = qrcode.make(checkout_url)
     buffer = BytesIO()
     img.save(buffer, format='PNG')
     buffer.seek(0)
