@@ -10,14 +10,18 @@ import secrets
 
 app = Flask(__name__)
 
-#API_BASE_URL = "http://localhost:8000"
-API_BASE_URL = "http://10.20.47.145:8000/" #connection to Jules computer
+API_BASE_URL = "http://localhost:8000"
+#API_BASE_URL = "http://10.20.47.145:8000/" #connection to Jules computer
 app.secret_key = secrets.token_hex(32)
 
 
-def get_user(user_id):
-    res = requests.get(f"{API_BASE_URL}/users/{user_id}")
+def get_user(user_id, token):
+    headers = {"Authorization": f"Bearer {token}"}
+    res = requests.get(f"{API_BASE_URL}/users/{user_id}", headers=headers)
+    print("User fetch response:", res.status_code, res.text)
     return res.json() if res.status_code == 200 else None
+
+
 
 def get_users():
     res = requests.get(f"{API_BASE_URL}/users")
@@ -132,28 +136,18 @@ def login():
 
             response_data = response.json()
             token = response_data.get("access_token")
-            user_id = token.user_id
-            user_id = int(user_id)
-            '''
-            AttributeError
-AttributeError: 'str' object has no attribute 'user_id'
-            '''
+            user_id = response_data.get("user_id")
 
-            print(user_id)
-            #there is an issue with how the user_id is being returned from the API. 
-            #I left the if only checking for the token and it worked but it couldn't find the user_id
-            #we need to do something to get the user_id from the token i think this is an our end problem
-            if token:# and user_id:
+            print("response_data:", response_data)
+
+            if token and user_id:
                 session["token"] = token
                 session["user_id"] = user_id
-
-                user = get_user(user_id)
-                if not user:
-                    return render_template('login.html', error="User not found")
 
                 return redirect(url_for('dashboard', user_id=user_id))
             else:
                 return render_template('login.html', error="Invalid credentials")
+
         except requests.exceptions.RequestException as e:
             return render_template('login.html', error=f"Login failed: {str(e)}")
 
@@ -181,7 +175,15 @@ def admin_panel(user_id):
 
 @app.route('/dashboard/<user_id>')
 def dashboard(user_id):
-    user = get_user(user_id)
+    token = session.get("token")
+    print("before if")
+    if not token:
+        print("hits if")
+        return redirect(url_for('login'))
+    print("after if")
+
+    user = get_user(user_id, token)
+    print(user)
     if not user:
         return "User not found", 404
 
