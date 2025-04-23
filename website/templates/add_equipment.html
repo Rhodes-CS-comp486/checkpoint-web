@@ -12,25 +12,30 @@
     {% if error %}
         <p style="color: red;">{{ error }}</p>
     {% endif %}
-
-    <form action="{{ url_for('add_equipment', user_id=user_id) }}" method="POST">
-        <label for="type">Equipment Type:</label>
-        <input type="text" name="type" placeholder="e.g., computer4" required>
-
-        <label for="description">Description:</label>
-        <input type="text" name="description" placeholder="e.g., Dell Latitude 7400" required>
-
-        <label for="availability">Availability:</label>
-        <select name="availability" required>
-            <option value="true" selected>Available</option>
-            <option value="false">Not Available</option>
-        </select>
-
-        <label for="quality">Quality (1-10):</label>
-        <input type="number" name="quality" placeholder="e.g., 8" required min="1" max="10">
-
-        <button type="submit">Add Equipment</button>
-    </form>
+        <form action="{{ url_for('add_equipment', user_id=user_id) }}" method="POST">
+            <label for="type">Equipment Type:</label>
+            <input type="text" name="type" placeholder="e.g., computer4" required>
+        
+            <label for="description">Description:</label>
+            <input type="text" name="description" placeholder="e.g., Dell Latitude 7400" required>
+        
+            <label for="model">Model:</label>
+            <input type="text" name="model" placeholder="e.g., Latitude 7400" required>
+        
+            <label for="location">Location:</label>
+            <input type="text" name="location" placeholder="e.g., Storage Room A" required>
+        
+            <label for="availability">Availability:</label>
+            <select name="availability" required>
+                <option value="true" selected>Available</option>
+                <option value="false">Not Available</option>
+            </select>
+        
+            <label for="quality">Quality (1-10):</label>
+            <input type="number" name="quality" placeholder="e.g., 8" min="1" max="10">
+        
+            <button type="submit">Add Equipment</button>
+        </form>
 
     <br><br>
     <a href="{{ url_for('dashboard', user_id=user_id) }}">Back to Dashboard</a>

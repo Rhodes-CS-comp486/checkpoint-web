@@ -18,24 +18,24 @@
             </tr>
         </thead>
         <tbody>
-            {% for username, user in users.items() %}
-                <tr>
-                    <td>{{ username }}</td>
-                    <td>{{ 'Yes' if user.admin else 'No' }}</td>
-                    <td>
-                        {% if username != 'admin' %}
-                            <form method="POST" style="display: inline;">
-                                <input type="hidden" name="username" value="{{ username }}">
-                                <input type="hidden" name="action" value="{{ 'demote' if user.admin else 'promote' }}">
-                                <button type="submit">
-                                    {{ 'Demote to User' if user.admin else 'Promote to Admin' }}
-                                </button>
-                            </form>
-                        {% else %}
-                            —
-                        {% endif %}
-                    </td>
-                </tr>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ 'Yes' if user.admin else 'No' }}</td>
+                <td>
+                    {% if user.username != 'admin' %}
+                        <form method="POST">
+                            <input type="hidden" name="username" value="{{ user.username }}">
+                            <input type="hidden" name="action" value="{{ 'demote' if user.admin else 'promote' }}">
+                            <button type="submit">
+                                {{ 'Demote to User' if user.admin else 'Promote to Admin' }}
+                             </button>
+                        </form>
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
@@ -71,12 +71,12 @@
             </tr>
         </thead>
         <tbody>
-            {% for username, user in users.items() %}
+            {% for user in users %}
                 <tr>
-                    <td>{{ username }}</td>
+                    <td>{{ user.username }}</td>
                     <td>{{ 'Yes' if user.admin else 'No' }}</td>
                     <td>
-                        <a href="{{ url_for('admin_user_details', admin_id=user_id, target_user_id=user.id) }}">View Info</a>
+                        <a href="{{ url_for('admin_user_details', admin_id=user_id, target_user_id=user.user_id) }}">View Info</a>
                     </td>
                 </tr>
             {% endfor %}

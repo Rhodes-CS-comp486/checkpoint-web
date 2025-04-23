@@ -15,78 +15,53 @@ API_BASE_URL = "http://localhost:8000"
 app.secret_key = secrets.token_hex(32)
 
 
-def get_user(user_id):
-    res = requests.get(f"{API_BASE_URL}/users/{user_id}")
+def get_all_users():
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+    res = requests.get(f"{API_BASE_URL}/users/all", headers=headers)
+    print("[DEBUG] /users/all response:", res.status_code)
+    return res.json() if res.status_code == 200 else []
+
+def get_current_user():
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+    res = requests.get(f"{API_BASE_URL}/users/me", headers=headers)
+    print("[DEBUG] /users/me response:", res.status_code, res.text)
+
     return res.json() if res.status_code == 200 else None
 
-def get_users():
-    res = requests.get(f"{API_BASE_URL}/users")
-    return res.json() if res.status_code == 200 else []
-
 def get_equipment():
-    res = requests.get(f"{API_BASE_URL}/equipment")
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+    res = requests.get(f"{API_BASE_URL}/items/filter", headers=headers)
+    print("[DEBUG] Equipment response:", res.status_code, res.text)
     return res.json() if res.status_code == 200 else []
 
-def get_reservations():
-    res = requests.get(f"{API_BASE_URL}/reservations")
-    return res.json() if res.status_code == 200 else {}
+def get_all_borrows():
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+    res = requests.get(f"{API_BASE_URL}/users/all/borrows", headers=headers)
+    print("[DEBUG] /users/all/borrows response:", res.status_code)
+    return res.json() if res.status_code == 200 else []
+
+def get_equipment_by_id(item_id):
+    headers = {"Authorization": f"Bearer {session['token']}"}
+    res = requests.get(f"{API_BASE_URL}/items/{item_id}", headers=headers)
+    print("[DEBUG] Equipment details:", res.status_code)
+    return res.json() if res.status_code == 200 else None
 
 def get_equipment_history(equipment_type):
     res = requests.get(f"{API_BASE_URL}/equipment_history/{equipment_type}")
     return res.json() if res.status_code == 200 else []
 
-"""
-# Hardcoded user data
-login_database = {
-    "user1": {"id": str(uuid.uuid4()), "username": "user1", "password": "password123", "admin": False},
-    "user2": {"id": str(uuid.uuid4()), "username": "user2", "password": "mypassword", "admin": False},
-    "user3": {"id": str(uuid.uuid4()), "username": "user3", "password": "12345", "admin": False},
-    "admin": {"id": str(uuid.uuid4()), "username": "admin", "password": "admin", "admin": True},
-}
-
-# Equipment data with boolean availability
-equipment_database = [
-    {'id': str(uuid.uuid4()), 'type': 'computer1', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '10'},
-    {'id': str(uuid.uuid4()), 'type': 'computer2', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '9'},
-    {'id': str(uuid.uuid4()), 'type': 'computer3', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '8'},
-]
-
-# sample equipment history data
-equipment_history = {
-    "computer1": [
-        {"user": "user1", "date": "2024-01-15", "status": "Checked Out"},
-        {"user": "user1", "date": "2024-01-20", "status": "Returned to Inventory"},
-        {"user": "user2", "date": "2024-02-10", "status": "Checked Out"},
-        {"user": "user2", "date": "2024-02-15", "status": "Returned to Inventory"},
-        {"user": "user3", "date": "2024-03-20", "status": "Checked Out"},
-        {"user": "user3", "date": "2024-03-25", "status": "Returned to Inventory"}
-    ],
-    "computer2": [
-        {"user": "user1", "date": "2024-01-15", "status": "Checked Out"},
-        {"user": "user1", "date": "2024-01-20", "status": "Returned to Inventory"},
-        {"user": "user2", "date": "2024-02-10", "status": "Checked Out"},
-        {"user": "user2", "date": "2024-02-15", "status": "Returned to Inventory"},
-        {"user": "user3", "date": "2024-03-20", "status": "Checked Out"},
-        {"user": "user3", "date": "2024-03-25", "status": "Returned to Inventory"}
-    ],
-    "computer3": [
-        {"user": "user1", "date": "2024-01-15", "status": "Checked Out"},
-        {"user": "user1", "date": "2024-01-20", "status": "Returned to Inventory"},
-        {"user": "user2", "date": "2024-02-10", "status": "Checked Out"},
-        {"user": "user2", "date": "2024-02-15", "status": "Returned to Inventory"},
-        {"user": "user3", "date": "2024-03-20", "status": "Checked Out"},
-        {"user": "user3", "date": "2024-03-25", "status": "Returned to Inventory"}
-    ]
-}
-
-reservations_database = {}
-
-""" #Hardcoded equipment data
-
 @app.route('/')
 def home():
     return render_template('index.html')
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -117,7 +92,6 @@ def register():
 
     return render_template('register.html')
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -132,204 +106,171 @@ def login():
 
             response_data = response.json()
             token = response_data.get("access_token")
-            user_id = token.user_id
-            user_id = int(user_id)
-            '''
-            AttributeError
-AttributeError: 'str' object has no attribute 'user_id'
-            '''
 
-            print(user_id)
-            #there is an issue with how the user_id is being returned from the API. 
-            #I left the if only checking for the token and it worked but it couldn't find the user_id
-            #we need to do something to get the user_id from the token i think this is an our end problem
-            if token:# and user_id:
-                session["token"] = token
-                session["user_id"] = user_id
-
-                user = get_user(user_id)
-                if not user:
-                    return render_template('login.html', error="User not found")
-
-                return redirect(url_for('dashboard', user_id=user_id))
-            else:
+            if not token:
                 return render_template('login.html', error="Invalid credentials")
+
+            # Store token in session
+            session["token"] = token
+
+            # Get current user info from /users/me
+            user = get_current_user()
+
+            if not user:
+                return render_template('login.html', error="Failed to fetch user data")
+
+            user_id = user.get("user_id")  # Adjust this if your API uses 'id' instead
+            session["user_id"] = user_id
+
+            return redirect(url_for('dashboard', user_id=user_id))
+
         except requests.exceptions.RequestException as e:
             return render_template('login.html', error=f"Login failed: {str(e)}")
 
     return render_template('login.html')
 
-'''
-@app.route('/admin/<user_id>', methods=['GET', 'POST'])
-def admin_panel(user_id):
-    current_user = get_user(user_id)
-    if not current_user or not current_user["admin"]:
-        return "Unauthorized", 403
-
-    if request.method == 'POST':
-        target_username = request.form.get('username')
-        action = request.form.get('action')
-        users = get_users()
-        target_user = next((u for u in users if u["username"] == target_username), None)
-
-        if target_user and target_user["username"] != current_user["username"]:
-            target_user["admin"] = (action == "promote")
-            requests.put(f"{API_BASE_URL}/users/{target_user['user_id']}", json=target_user)
-
-    return render_template("admin.html", user_id=user_id, users=get_users())
-'''
-
 @app.route('/dashboard/<user_id>')
 def dashboard(user_id):
-    user = get_user(user_id)
+    # Get user info
+    user = get_current_user()
     if not user:
-        return "User not found", 404
+        return "User not found or not authenticated", 404
 
-    username = user["username"]
-    is_admin = user["admin"]
+    username = user.get("username")
+    is_admin = user.get("is_admin") or user.get("admin") or False  # use correct key from /users/me
 
-    equipment_database = get_equipment()
-    reservations_database = get_reservations()
+    # Get available equipment
+    equipment = get_equipment()
 
-    today_str = datetime.today().strftime("%Y-%m-%d")
-    reserved_today = set(res["equipment"] for res in reservations_database.get(today_str, []))
+    # TODO: Get reservation info if needed
+    # For now, we'll assume all equipment is available unless the API tracks reservations
 
-    for item in equipment_database:
-        item["availability"] = False if item["type"] in reserved_today else True
-
-    return render_template('dashboard.html', username=username, user_id=user_id, equipment=equipment_database, is_admin=is_admin)
-
+    return render_template(
+        'dashboard.html',
+        username=username,
+        user_id=user_id,
+        equipment=equipment,
+        is_admin=is_admin
+    )
 
 @app.route('/admin/<user_id>', methods=['GET', 'POST'])
 def admin_panel(user_id):
-    current_user = next((u for u in login_database.values() if u["id"] == user_id), None)
-    if not current_user or not current_user["admin"]:
+    user = get_current_user()
+    if not user or not user.get("admin"):
         return "Unauthorized", 403
 
     if request.method == 'POST':
         target_username = request.form.get('username')
         action = request.form.get('action')
 
-        if target_username in login_database and target_username != current_user["username"]:
-            login_database[target_username]["admin"] = (action == "promote")
+        if action in ["promote", "demote"]:
+            headers = {"Authorization": f"Bearer {session['token']}"}
+            elevate_url = f"{API_BASE_URL}/users/{target_username}/elevate"
+            
+            # Elevate or demote based on action
+            if action == "promote":
+                res = requests.put(elevate_url, headers=headers)
+            elif action == "demote":
+                # Assuming your API supports this — if not, you'd need a demotion endpoint
+                res = requests.put(elevate_url, headers=headers, json={"demote": True})
+            
+            print(f"[DEBUG] {action.capitalize()} {target_username}: {res.status_code} {res.text}")
 
-    # Flatten equipment history
-    history_log = []
-    for equipment_type, logs in equipment_history.items():
-        for record in logs:
-            history_log.append({
-                "user": record["user"],
-                "equipment": equipment_type,
-                "date": record["date"],
-                "status": record["status"]
-            })
+    users = get_all_users()
+    borrows = get_all_borrows()
 
-    # Flatten reservation log
-    reservation_log = []
-    for date, reservations in reservations_database.items():
-        for res in reservations:
-            reservation_log.append({
-                "user": res["user"],
-                "equipment": res["equipment"],
-                "date": date,
-                "status": "Reserved"
-            })
+    # Format combined log if needed
+    combined_log = []
+    for record in borrows:
+        combined_log.append({
+            "user": record.get("username"),
+            "equipment": record.get("item_id") or record.get("item_name", "Unknown"),
+            "date": record.get("date_borrowed", "N/A"),
+            "status": "Borrowed" if not record.get("returned") else "Returned"
+        })
 
-    # Combine and sort
-    combined_log = history_log + reservation_log
     combined_log.sort(key=lambda x: x["date"], reverse=True)
 
-    return render_template("admin.html", user_id=user_id, users=login_database, log=combined_log)
-
+    return render_template(
+        "admin.html",
+        user_id=user_id,
+        users=users,
+        log=combined_log
+    )
 
 @app.route('/admin/user_details/<admin_id>/<target_user_id>')
 def admin_user_details(admin_id, target_user_id):
-    # Verify current user is admin
-    admin = next((u for u in login_database.values() if u["id"] == admin_id), None)
-    if not admin or not admin["admin"]:
+    # Make sure the current user is an admin
+    current_user = get_current_user()
+    if not current_user or not current_user.get("admin"):
         return "Unauthorized", 403
 
-    # Get the target user
-    target_user = next((u for u in login_database.values() if u["id"] == target_user_id), None)
+    # Get all users to find the target user
+    users = get_all_users()
+    target_user = next((u for u in users if u["user_id"] == target_user_id), None)
+    
     if not target_user:
         return "User not found", 404
 
-    target_username = target_user["username"]
-    target_password = target_user["password"]
-    target_is_admin = target_user["admin"]
+    # Get full borrow history and filter by user
+    all_borrows = get_all_borrows()
+    user_history = [
+        {
+            "equipment": borrow.get("item_id", "Unknown"),
+            "date": borrow.get("date_borrowed", "N/A"),
+            "status": "Returned" if borrow.get("returned") else "Borrowed"
+        }
+        for borrow in all_borrows
+        if borrow.get("user_id") == target_user_id
+    ]
 
-    # Compile history
-    user_history = []
-
-    # From equipment history
-    for equipment_type, logs in equipment_history.items():
-        for record in logs:
-            if record["user"] == target_username:
-                user_history.append({
-                    "equipment": equipment_type,
-                    "date": record["date"],
-                    "status": record["status"]
-                })
-
-    # From reservations
-    for date, reservations in reservations_database.items():
-        for res in reservations:
-            if res["user"] == target_user_id:
-                user_history.append({
-                    "equipment": res["equipment"],
-                    "date": date,
-                    "status": "Reserved"
-                })
-
-    # Sort by date
     user_history.sort(key=lambda x: x["date"], reverse=True)
 
     return render_template(
         'admin_user_details.html',
         admin_id=admin_id,
-        username=target_username,
-        password=target_password,
-        is_admin=target_is_admin,
+        username=target_user.get("username"),
+        is_admin=target_user.get("admin"),
         history=user_history
     )
 
-
 @app.route('/admin/generate_pdf/<user_id>', methods=['POST'])
 def generate_pdf(user_id):
-    current_user = get_user(user_id)
-    if not current_user or not current_user["admin"]:
+    current_user = get_current_user()
+    if not current_user or not current_user.get("admin"):
         return "Unauthorized", 403
 
     report_type = request.form.get('report_type')
-    selected_value = request.form.get('selected_value')
+    selected_value = request.form.get('selected_value', '').strip()
+
+    borrows = get_all_borrows()
     report_data = []
 
     if report_type == "user":
-        users = get_users()
-        username = selected_value
-        for equipment in get_equipment():
-            history = get_equipment_history(equipment["type"])
-            for record in history:
-                if record["user"] == username:
-                    report_data.append((record["user"], equipment["type"], record["date"], record["status"]))
-
+        report_data = [
+            (b["username"], b["item_id"], b["date_borrowed"], "Returned" if b.get("returned") else "Borrowed")
+            for b in borrows if b.get("username", "").lower() == selected_value.lower()
+        ]
     elif report_type == "equipment":
-        history = get_equipment_history(selected_value)
-        for record in history:
-            report_data.append((record["user"], selected_value, record["date"], record["status"]))
-
+        report_data = [
+            (b["username"], b["item_id"], b["date_borrowed"], "Returned" if b.get("returned") else "Borrowed")
+            for b in borrows if b.get("item_id", "").lower() == selected_value.lower()
+        ]
     elif report_type == "all_users":
-        for equipment in get_equipment():
-            history = get_equipment_history(equipment["type"])
-            for record in history:
-                report_data.append((record["user"], equipment["type"], record["date"], record["status"]))
+        report_data = [
+            (b["username"], b["item_id"], b["date_borrowed"], "Returned" if b.get("returned") else "Borrowed")
+            for b in borrows
+        ]
 
+    # Generate PDF
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
+
     pdf.setFont("Helvetica-Bold", 14)
     pdf.drawString(200, height - 40, "Usage History Report")
     pdf.setFont("Helvetica", 10)
+
     y = height - 80
     pdf.drawString(50, y, "User")
     pdf.drawString(150, y, "Equipment")
@@ -337,65 +278,92 @@ def generate_pdf(user_id):
     pdf.drawString(400, y, "Status")
     y -= 20
 
-    for user, equip, date, status in report_data:
+    for user, equipment, date, status in report_data:
         if y < 50:
             pdf.showPage()
             y = height - 50
         pdf.drawString(50, y, user)
-        pdf.drawString(150, y, equip)
+        pdf.drawString(150, y, equipment)
         pdf.drawString(300, y, date)
         pdf.drawString(400, y, status)
         y -= 15
 
     pdf.save()
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name="usage_report.pdf", mimetype='application/pdf')
 
+    return send_file(buffer, as_attachment=True, download_name="usage_report.pdf", mimetype='application/pdf')
 
 @app.route('/add_equipment/<user_id>', methods=['GET', 'POST'])
 def add_equipment(user_id):
-    user = get_user(user_id)
-    if not user:
-        return "User not found", 404
+    user = get_current_user()
+    if not user or not user.get("admin"):
+        return "Unauthorized", 403
 
     if request.method == 'POST':
-        equipment_type = request.form.get('type')
+        name = request.form.get('type')
         description = request.form.get('description')
-        quality = request.form.get('quality')
+        model = request.form.get('model')
+        location = request.form.get('location')
+        availability_str = request.form.get('availability', 'true')
+        availability = availability_str.lower() == 'true'
+        quality = request.form.get('quality')  # Optional
+        borrow_period_days = "P7D"  # Default
+        status = "Available"
+        damage = ""
 
-        if not equipment_type or not description or not quality:
+        if not name or not description or not model or not location:
             return render_template('add_equipment.html', user_id=user_id, error="All fields are required.")
 
+        item_id = str(uuid.uuid4())
+
         new_equipment = {
-            'type': equipment_type,
-            'description': description,
-            'quality': quality
+            "id": item_id,
+            "name": name,
+            "description": description,
+            "model": model,
+            "location": location,
+            "availability": availability,
+            "borrow_period_days": borrow_period_days,
+            "status": status,
+            "damage": damage
         }
-        requests.post(f"{API_BASE_URL}/equipment", json=new_equipment)
-        return redirect(url_for('dashboard', user_id=user_id))
+
+        headers = {"Authorization": f"Bearer {session['token']}"}
+        response = requests.put(f"{API_BASE_URL}/items/add/{item_id}", json=new_equipment, headers=headers)
+
+        print("[DEBUG] Payload sent:", new_equipment)
+        print("[DEBUG] Response:", response.status_code, response.text)
+
+        if response.status_code == 200:
+            return redirect(url_for('dashboard', user_id=user_id))
+        else:
+            return render_template('add_equipment.html', user_id=user_id, error="Failed to add equipment.")
 
     return render_template('add_equipment.html', user_id=user_id)
 
-
 @app.route('/remove_equipment/<user_id>', methods=['GET', 'POST'])
 def remove_equipment(user_id):
-    user = get_user(user_id)
-    if not user:
-        return "User not found", 404
+    user = get_current_user()
+    if not user or not user.get("admin"):
+        return "Unauthorized", 403
 
-    equipment_database = get_equipment()
+    equipment_list = get_equipment()
 
     if request.method == 'POST':
-        id_to_remove = request.form.get('id')
-        if not any(item['id'] == id_to_remove for item in equipment_database):
-            return render_template('remove_equipment.html', user_id=user_id, equipment=equipment_database, error="Equipment not found.")
+        item_id = request.form.get('item_id')
 
-        requests.delete(f"{API_BASE_URL}/equipment/{id_to_remove}")
-        return redirect(url_for('dashboard', user_id=user_id))
+        if not item_id:
+            return render_template('remove_equipment.html', user_id=user_id, equipment=equipment_list, error="No item selected.")
 
-    selected_id = request.args.get('id')
-    return render_template('remove_equipment.html', user_id=user_id, equipment=equipment_database, selected_id=selected_id)
+        headers = {"Authorization": f"Bearer {session['token']}"}
+        res = requests.delete(f"{API_BASE_URL}/items/delete/{item_id}", headers=headers)
 
+        if res.status_code == 200:
+            return redirect(url_for('dashboard', user_id=user_id))
+        else:
+            return render_template('remove_equipment.html', user_id=user_id, equipment=equipment_list, error="Failed to remove equipment.")
+
+    return render_template('remove_equipment.html', user_id=user_id, equipment=equipment_list)
 
 @app.route('/equipment_history/<user_id>/<equipment_type>')
 def equipment_detail(user_id, equipment_type):
@@ -411,7 +379,6 @@ def equipment_detail(user_id, equipment_type):
         return "Equipment not found", 404
 
     return render_template('equipment.html', user_id=user_id, equipment=equipment_info, history=history)
-
 
 @app.route('/reservations/<user_id>')
 def reservations(user_id):
@@ -447,7 +414,6 @@ def reservations(user_id):
         reservations=table_reservations,
         calendar_events=events
     )
-
 
 @app.route('/make_reservation/<user_id>', methods=['POST'])
 def make_reservation(user_id):

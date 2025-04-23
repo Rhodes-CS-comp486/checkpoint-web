@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Remove Equipment</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -13,19 +12,18 @@
         <p style="color: red;">{{ error }}</p>
     {% endif %}
 
-    <form action="{{ url_for('remove_equipment', user_id=user_id) }}" method="POST">
-        <label for="id">Select Equipment to Remove:</label>
-        <select name="id" required>
+    <form method="POST">
+        <label for="item_id">Select Equipment to Remove:</label><br>
+        <select name="item_id" required>
             {% for item in equipment %}
-                <option value="{{ item.id }}" {% if request.args.get('id') == item.id %}selected{% endif %}>
-                    {{ item.type }} - {{ item.description }}
-                </option>
+                <option value="{{ item.id }}">{{ item.name }} - {{ item.model }} ({{ item.id }})</option>
             {% endfor %}
         </select>
-        <button type="submit">Remove Equipment</button>
+        <br><br>
+        <button type="submit">Remove Selected Equipment</button>
     </form>
 
-    <br><br>
+    <br>
     <a href="{{ url_for('dashboard', user_id=user_id) }}">Back to Dashboard</a>
 </body>
 </html>
