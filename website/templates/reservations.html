@@ -4,29 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reservation System</title>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/reservations.css') }}">
+    
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.css' rel='stylesheet' />
 </head>
 <body>
     <h2>Reserve Equipment</h2>
+
     <!-- Reservation Form -->
     <form method="POST" action="{{ url_for('make_reservation', user_id=user_id) }}">
         <label for="equipment">Select Equipment:</label>
         <select name="equipment" id="equipment" required>
             {% for item in equipment %}
-                <option value="{{ item.type }}">{{ item.type }} - {{ item.description }}</option>
+                {% if item.availability %}
+                    <option value="{{ item.id }}">{{ item.name }} - {{ item.description }}</option>
+                {% endif %}
             {% endfor %}
         </select>
+
         <label for="start_date">Start Date:</label>
         <input type="date" name="start_date" required>
+
         <label for="end_date">End Date:</label>
         <input type="date" name="end_date" required>
+
         <button type="submit">Reserve Equipment</button>
     </form>
+
     <h3>Reservations Calendar</h3>
     <div id="calendar"></div>
+
     <h3>Reservation List</h3>
+
     {% if reservations %}
         <table border="1">
             <thead>
@@ -63,8 +74,10 @@
     {% else %}
         <p>No reservations yet.</p>
     {% endif %}
+
     <br>
     <a href="{{ url_for('dashboard', user_id=user_id) }}">Back to Dashboard</a>
+
     <!-- FullCalendar JS -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js'></script>
     <script>

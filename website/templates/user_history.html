@@ -27,7 +27,7 @@
                 {% for record in history %}
                     <tr>
                         <td>{{ record.equipment_type }}</td>
-                        <td><a href="{{ url_for('equipment_detail', user_id=user_id, equipment_type=record.equipment_type) }}">History</a></td>
+                        <td><a href="{{ url_for('equipment_detail', user_id=user_id, equipment_id=record.equipment_id) }}">History</a></td>
                         <td>{{ record.date }}</td>
                         <td>{{ record.status | title }}</td>
                         <td>{{ 'available' if record.availability else 'unavailable' }}</td>

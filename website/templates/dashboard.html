@@ -5,51 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- css stylesheet link -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <h2>Equipment Dashboard</h2>
 
     <table border="1">
-        <thread>
+        <thead>
             <tr>
-                <th>Equipment Type</th>
+                <th>Equipment Name</th>
                 <th>History Log</th>
                 <th>Description</th>
                 <th>Availability</th>
-                <th>Quantity</th>
+                {% if is_admin %}
+                    <th>Toggle Availability</th>
+                {% endif %}
+                <th>Model</th>
                 <th>Reserve</th>
                 <th>Checkout</th>
-                <th>checkin</th>
-                
+                <th>Checkin</th>
+                {% if is_admin %}
+                    <th>Remove</th>
+                {% endif %}
             </tr>
-        </thread>
+        </thead>
         <tbody>
             {% if equipment %}
                 {% for item in equipment %}
                     <tr>
-                        <td>{{ item.type }}</td>
-                        <td><a href="{{ url_for('equipment_detail', user_id=user_id, equipment_type=item.type) }}">History</a></td>
+                        <td>{{ item.name }}</td>
+                        <td>
+                            <a href="{{ url_for('equipment_detail', user_id=user_id, equipment_id=item.id) }}">History</a>
+                        </td>
                         <td>{{ item.description }}</td>
-                        <td>{{ 'available' if item.availability else 'unavailable' }}</td>
-                        <td>{{ item.quality }}</td>
-                        <td><a href="{{ url_for('reservations', user_id=user_id) }}">Make a Reservation</a></td>
+                        <td>{{ 'Available' if item.availability else 'Unavailable' }}</td>
+
+                        {% if is_admin %}
+                        <td>
+                            <form method="POST" action="{{ url_for('toggle_availability', user_id=user_id) }}">
+                                <input type="hidden" name="item_id" value="{{ item.id }}">
+                                <input type="hidden" name="current_availability" value="{{ item.availability }}">
+                                <button type="submit">
+                                    {{ 'Mark Unavailable' if item.availability else 'Mark Available' }}
+                                </button>
+                            </form>
+                        </td>
+                        {% endif %}
+
+                        <td>{{ item.model }}</td>
+
                         <td>
                             {% if item.availability %}
-                                <form method="GET" action="{{ url_for('checkout_equipment', user_id=user_id, equipment_type=item.type) }}">
+                                <a href="{{ url_for('reservations', user_id=user_id) }}">Reserve</a>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if item.availability %}
+                                <form method="GET" action="{{ url_for('checkout_equipment', user_id=user_id, equipment_id=item.id) }}">
                                     <button type="submit">Checkout</button>
                                 </form>
                             {% else %}
                                 —
                             {% endif %}
                         </td>
+
                         <td>
-                            <form method="POST" action="{{ url_for('checkin_equipment', user_id=user_id, equipment_type=item.type) }}">
+                            <form method="POST" action="{{ url_for('checkin_equipment', user_id=user_id, equipment_id=item.id) }}">
                                 <button type="submit">Check In</button>
                             </form>
-                        </td>                        
+                        </td>
+
                         <td>
                             {% if is_admin %}
                                 <a href="{{ url_for('remove_equipment', user_id=user_id, id=item.id) }}">Remove</a>
@@ -61,12 +89,14 @@
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="4">No equipment available</td>
+                    <td colspan="10">No equipment available</td>
                 </tr>
-            {% endif %}    
+            {% endif %}
         </tbody>
     </table>
+
     <br>
+
     <ul>
         <li><a href="{{ url_for('user_history', user_id=user_id) }}">View My History</a></li>
         {% if is_admin %}
