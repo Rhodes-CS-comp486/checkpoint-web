@@ -107,28 +107,35 @@ def login():
 
             response_data = response.json()
             token = response_data.get("access_token")
-
+            
             if not token:
                 return render_template('login.html', error="Invalid credentials")
 
-            # Store token in session
+            # Save token and user info
             session["token"] = token
 
-            # Get current user info from /users/me
-            user = get_current_user()
+            # Now get user info
+            user_info_response = requests.get(f"{API_BASE_URL}/users/me", headers={"Authorization": f"Bearer {token}"})
+            user_info_response.raise_for_status()
+            user_info = user_info_response.json()
 
-            if not user:
-                return render_template('login.html', error="Failed to fetch user data")
+            session["user_id"] = user_info["user_id"]
+            session["username"] = user_info["username"]
+            session["is_admin"] = user_info["admin"]
 
-            user_id = user.get("user_id")  # Adjust this if your API uses 'id' instead
-            session["user_id"] = user_id
+            # Check if they scanned a QR and need to finish checkout
+            if 'pending_checkout_equipment_id' in session:
+                equipment_id = session.pop('pending_checkout_equipment_id')
+                return redirect(url_for('checkout_equipment', user_id=session['user_id'], equipment_id=equipment_id))
 
-            return redirect(url_for('dashboard', user_id=user_id))
+            # Normal dashboard redirect
+            return redirect(url_for('dashboard', user_id=session['user_id']))
 
         except requests.exceptions.RequestException as e:
             return render_template('login.html', error=f"Login failed: {str(e)}")
 
     return render_template('login.html')
+
 
 @app.route('/dashboard/<user_id>')
 def dashboard(user_id):
@@ -265,10 +272,9 @@ def generate_equipment_qrcode(user_id, equipment_id):
     if not equipment_info:
         return "Equipment not found", 404
 
-    # Create a checkout link (external full URL)
-    checkout_url = url_for('checkout_equipment', user_id='scan', equipment_id=equipment_id, _external=True)
+    # Important: use "scan" instead of admin's ID
+    checkout_url = url_for('checkout_equipment', user_id="scan", equipment_id=equipment_id, _external=True)
 
-    # Generate QR code
     img = qrcode.make(checkout_url)
     buffer = BytesIO()
     img.save(buffer, format='PNG')
@@ -580,11 +586,15 @@ def user_history(user_id):
 @app.route('/checkout/<user_id>/<equipment_id>', methods=['GET', 'POST'])
 def checkout_equipment(user_id, equipment_id):
     if user_id == "scan":
-        if "user_id" not in session:
-            session['pending_checkout_equipment_id'] = equipment_id
-            return redirect(url_for('login'))
-        user_id = session['user_id']
+        # FORCE logout anyone who is already logged in
+        session.clear()
 
+        # Save the equipment_id they are trying to check out
+        session['pending_checkout_equipment_id'] = equipment_id
+
+        return redirect(url_for('login'))
+
+    # Normal flow after login
     user = get_current_user()
     if not user:
         return "Unauthorized", 403
@@ -605,9 +615,6 @@ def checkout_equipment(user_id, equipment_id):
     max_days = 7
 
     if request.method == 'POST':
-        # NOTICE: we don't ask for days anymore!
-        # Just directly checkout
-
         start_date = today.strftime("%Y-%m-%d")
         checkout_data = {
             "item_id": equipment_id,
@@ -624,7 +631,7 @@ def checkout_equipment(user_id, equipment_id):
                                    success=success_message)
         else:
             return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id,
-                                   equipment_name=equipment_name, max_days=0,
+                                   equipment_name=equipment_name, max_days=max_days,
                                    error="Failed to check out equipment.")
 
     return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id,
