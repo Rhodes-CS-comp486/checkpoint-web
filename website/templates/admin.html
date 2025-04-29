@@ -24,7 +24,7 @@
                 <td>{{ 'Yes' if user.admin else 'No' }}</td>
                 <td>
                     {% if user.username != 'admin' %}
-                        <form method="POST" style="display:inline;">
+                        <form method="POST">
                             <input type="hidden" name="username" value="{{ user.username }}">
                             <input type="hidden" name="action" value="{{ 'demote' if user.admin else 'promote' }}">
                             <button type="submit">
@@ -41,6 +41,13 @@
     </table>
 
     <br><br>
+
+    <!-- QR Code Generator for Equipment -->
+    <h2>Generate Equipment QR Code</h2>
+    <form method="GET" action="{{ url_for('generate_qrcode_form', user_id=user_id) }}">
+        <button type="submit">Generate QR Code for Equipment</button>
+    </form>
+
 
     <!-- PDF Report Generator -->
     <h2>Generate Usage Report (PDF)</h2>

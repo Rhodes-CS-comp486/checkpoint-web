@@ -1,3 +1,4 @@
+import qrcode
 from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file, session
 from datetime import datetime, timedelta
 from reportlab.lib.pagesizes import letter
@@ -252,6 +253,44 @@ def admin_user_details(admin_id, target_user_id):
         is_admin=target_user.get("admin"),
         history=user_history
     )
+
+
+@app.route('/admin/qrcode/<user_id>/<equipment_id>')
+def generate_equipment_qrcode(user_id, equipment_id):
+    user = get_current_user()
+    if not user or not user.get("admin"):
+        return "Unauthorized", 403
+
+    equipment_info = get_equipment_by_id(equipment_id)
+    if not equipment_info:
+        return "Equipment not found", 404
+
+    # Create a checkout link (external full URL)
+    checkout_url = url_for('checkout_equipment', user_id='scan', equipment_id=equipment_id, _external=True)
+
+    # Generate QR code
+    img = qrcode.make(checkout_url)
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+
+    return send_file(buffer, mimetype='image/png', download_name=f"{equipment_info['name']}_qr.png")
+
+
+@app.route('/admin/generate_qrcode_form/<user_id>', methods=['GET', 'POST'])
+def generate_qrcode_form(user_id):
+    user = get_current_user()
+    if not user or not user.get("admin"):
+        return "Unauthorized", 403
+
+    equipment_list = get_equipment()
+
+    if request.method == 'POST':
+        selected_equipment_id = request.form.get('equipment_id')
+        return redirect(url_for('generate_equipment_qrcode', user_id=user_id, equipment_id=selected_equipment_id))
+
+    return render_template('generate_qrcode.html', user_id=user_id, equipment=equipment_list)
+
 
 @app.route('/admin/generate_pdf/<user_id>', methods=['POST'])
 def generate_pdf(user_id):
@@ -540,33 +579,35 @@ def user_history(user_id):
 
 @app.route('/checkout/<user_id>/<equipment_id>', methods=['GET', 'POST'])
 def checkout_equipment(user_id, equipment_id):
+    if user_id == "scan":
+        if "user_id" not in session:
+            session['pending_checkout_equipment_id'] = equipment_id
+            return redirect(url_for('login'))
+        user_id = session['user_id']
+
     user = get_current_user()
     if not user:
         return "Unauthorized", 403
 
     headers = {"Authorization": f"Bearer {session['token']}"}
-
-    # Fetch the latest equipment info
     equipment_info = get_equipment_by_id(equipment_id)
     if not equipment_info:
         return "Equipment not found", 404
 
-    # Check availability
+    equipment_name = equipment_info.get('name', 'Unknown Equipment')
+
     if not equipment_info.get('availability', True):
-        return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id, max_days=0,
+        return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id,
+                               equipment_name=equipment_name, max_days=0,
                                error="This item is currently not available for checkout.")
 
     today = datetime.today().date()
-    max_days = 7  # Default checkout max duration
+    max_days = 7
 
     if request.method == 'POST':
-        days = int(request.form.get('days'))
+        # NOTICE: we don't ask for days anymore!
+        # Just directly checkout
 
-        if days < 1 or days > max_days:
-            return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id, max_days=max_days,
-                                   error=f"You can only check out for up to {max_days} days.")
-
-        # Perform one checkout starting today (assuming backend does not support setting multiple future days yet)
         start_date = today.strftime("%Y-%m-%d")
         checkout_data = {
             "item_id": equipment_id,
@@ -577,14 +618,17 @@ def checkout_equipment(user_id, equipment_id):
         print("[DEBUG] Checkout response:", response.status_code, response.text)
 
         if response.status_code == 200:
-            success_message = f"{equipment_info.get('name', 'Equipment')} successfully checked out for {days} day(s)."
-            return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id, max_days=0,
+            success_message = f"{equipment_name} successfully checked out."
+            return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id,
+                                   equipment_name=equipment_name, max_days=0,
                                    success=success_message)
         else:
-            return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id, max_days=max_days,
+            return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id,
+                                   equipment_name=equipment_name, max_days=0,
                                    error="Failed to check out equipment.")
 
-    return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id, max_days=max_days)
+    return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id,
+                           equipment_name=equipment_name, max_days=max_days)
 
 
 @app.route('/checkin/<user_id>/<equipment_id>', methods=['POST'])
