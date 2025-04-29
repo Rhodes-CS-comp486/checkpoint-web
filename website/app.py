@@ -186,15 +186,13 @@ def admin_panel(user_id):
 
         if action in ["promote", "demote"]:
             headers = {"Authorization": f"Bearer {session['token']}"}
-            elevate_url = f"{API_BASE_URL}/users/{target_username}/elevate"
-            
-            # Elevate or demote based on action
+
             if action == "promote":
-                res = requests.put(elevate_url, headers=headers)
+                url = f"{API_BASE_URL}/users/{target_username}/elevate"
             elif action == "demote":
-                # Assuming your API supports this — if not, you'd need a demotion endpoint
-                res = requests.put(elevate_url, headers=headers, json={"demote": True})
-            
+                url = f"{API_BASE_URL}/users/{target_username}/demote"
+
+            res = requests.put(url, headers=headers)
             print(f"[DEBUG] {action.capitalize()} {target_username}: {res.status_code} {res.text}")
 
     users = get_all_users()
