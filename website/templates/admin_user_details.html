@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,6 +9,9 @@
     <h2>User Info: {{ username }}</h2>
 
     <p><strong>Username:</strong> {{ username }}</p>
+    <p><strong>Email:</strong> {{ email }}</p>
+    <p><strong>Full Name:</strong> {{ full_name }}</p>
+    <p><strong>User ID:</strong> {{ user_id }}</p>
     <p><strong>Admin:</strong> {{ 'Yes' if is_admin else 'No' }}</p>
 
     <h3>Activity History</h3>
@@ -21,13 +24,19 @@
             </tr>
         </thead>
         <tbody>
-            {% for entry in history %}
+            {% if history %}
+                {% for entry in history %}
+                    <tr>
+                        <td>{{ entry.equipment }}</td>
+                        <td>{{ entry.date }}</td>
+                        <td>{{ entry.status }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
                 <tr>
-                    <td>{{ entry.equipment }}</td>
-                    <td>{{ entry.date }}</td>
-                    <td>{{ entry.status }}</td>
+                    <td colspan="3">No activity found.</td>
                 </tr>
-            {% endfor %}
+            {% endif %}
         </tbody>
     </table>
 

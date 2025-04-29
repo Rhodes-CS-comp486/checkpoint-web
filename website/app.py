@@ -150,9 +150,6 @@ def dashboard(user_id):
     # Get available equipment
     equipment = get_equipment()
 
-    # TODO: Get reservation info if needed
-    # For now, we'll assume all equipment is available unless the API tracks reservations
-
     return render_template(
         'dashboard.html',
         username=username,
@@ -209,9 +206,14 @@ def admin_panel(user_id):
     # Format combined log if needed
     combined_log = []
     for record in borrows:
+        item_id = record.get("item_id")
+        # Call get item API using item_id
+        item = requests.get(f"{API_BASE_URL}/items/{item_id}").json() if item_id else {}
+
+        equipment_name = item.get("name", "Unknown Equipment")
         combined_log.append({
             "user": record.get("username"),
-            "equipment": record.get("item_id") or record.get("item_name", "Unknown"),
+            "equipment": equipment_name,
             "date": record.get("date_borrowed", "N/A"),
             "status": "Borrowed" if not record.get("returned") else "Returned"
         })
@@ -227,40 +229,50 @@ def admin_panel(user_id):
 
 @app.route('/admin/user_details/<admin_id>/<target_user_id>')
 def admin_user_details(admin_id, target_user_id):
-    # Make sure the current user is an admin
-    current_user = get_current_user()
-    if not current_user or not current_user.get("admin"):
+    admin = get_current_user()
+    if not admin or not admin.get("admin"):
         return "Unauthorized", 403
 
-    # Get all users to find the target user
     users = get_all_users()
     target_user = next((u for u in users if u["user_id"] == target_user_id), None)
-    
+
     if not target_user:
         return "User not found", 404
 
-    # Get full borrow history and filter by user
-    all_borrows = get_all_borrows()
-    user_history = [
-        {
-            "equipment": borrow.get("item_id", "Unknown"),
-            "date": borrow.get("date_borrowed", "N/A"),
-            "status": "Returned" if borrow.get("returned") else "Borrowed"
-        }
-        for borrow in all_borrows
-        if borrow.get("user_id") == target_user_id
-    ]
+    username = target_user.get("username")
+    email = target_user.get("email")
+    full_name = target_user.get("full_name")
+    is_admin = target_user.get("admin")
+    user_id = target_user.get("user_id")
 
-    user_history.sort(key=lambda x: x["date"], reverse=True)
+    borrows = get_all_borrows()
+    history = []
+
+    for record in borrows:
+        if record.get("user_id") == target_user_id or record.get("username") == username:
+            item_id = record.get("item_id")
+            # Call get item API using item_id
+            item = requests.get(f"{API_BASE_URL}/items/{item_id}").json() if item_id else {}
+
+            equipment_name = item.get("name", "Unknown Equipment")
+            history.append({
+                "equipment": equipment_name,
+                "date": record.get("date_borrowed", "Unknown Date"),
+                "status": "Borrowed" if not record.get("returned") else "Returned"
+            })
+
+    history.sort(key=lambda x: x["date"], reverse=True)
 
     return render_template(
         'admin_user_details.html',
         admin_id=admin_id,
-        username=target_user.get("username"),
-        is_admin=target_user.get("admin"),
-        history=user_history
+        username=username,
+        email=email,
+        full_name=full_name,
+        user_id=user_id,
+        is_admin=is_admin,
+        history=history
     )
-
 
 @app.route('/admin/qrcode/<user_id>/<equipment_id>')
 def generate_equipment_qrcode(user_id, equipment_id):
@@ -568,15 +580,20 @@ def user_history(user_id):
 
     borrows = res.json()
 
-    # Build user's transaction history
-    user_transactions = [
-        {
-            "equipment_type": b.get("item_id", "Unknown"),
+    user_transactions = []
+
+    for b in borrows:
+        item_id = b.get("item_id")
+        # Fetch item info to get the real name
+        item = requests.get(f"{API_BASE_URL}/items/{item_id}", headers=headers).json() if item_id else {}
+        equipment_name = item.get("name", "Unknown Equipment")
+
+        user_transactions.append({
+            "equipment": equipment_name,
+            "item_id": item_id,
             "date": b.get("date_borrowed", "N/A"),
             "status": "Returned" if b.get("returned") else "Borrowed"
-        }
-        for b in borrows
-    ]
+        })
 
     user_transactions.sort(key=lambda x: x["date"], reverse=True)
 

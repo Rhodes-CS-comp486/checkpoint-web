@@ -17,11 +17,11 @@
                 <th>History Log</th>
                 <th>Description</th>
                 <th>Availability</th>
-                {% if is_admin %}
+                <!--{% if is_admin %}
                     <th>Toggle Availability</th>
-                {% endif %}
+                {% endif %}-->
                 <th>Model</th>
-                <th>Reserve</th>
+                <!--<th>Reserve</th>-->
                 <th>Checkout</th>
                 <th>Checkin</th>
                 {% if is_admin %}
@@ -40,7 +40,7 @@
                         <td>{{ item.description }}</td>
                         <td>{{ 'Available' if item.availability else 'Unavailable' }}</td>
 
-                        {% if is_admin %}
+                        <!--{% if is_admin %}
                         <td>
                             <form method="POST" action="{{ url_for('toggle_availability', user_id=user_id) }}">
                                 <input type="hidden" name="item_id" value="{{ item.id }}">
@@ -50,10 +50,9 @@
                                 </button>
                             </form>
                         </td>
-                        {% endif %}
-
+                        {% endif %}-->
                         <td>{{ item.model }}</td>
-
+                        <!--
                         <td>
                             {% if item.availability %}
                                 <a href="{{ url_for('reservations', user_id=user_id) }}">Reserve</a>
@@ -61,7 +60,7 @@
                                 —
                             {% endif %}
                         </td>
-
+                        -->
                         <td>
                             {% if item.availability %}
                                 <form method="GET" action="{{ url_for('checkout_equipment', user_id=user_id, equipment_id=item.id) }}">
@@ -71,13 +70,11 @@
                                 —
                             {% endif %}
                         </td>
-
                         <td>
                             <form method="POST" action="{{ url_for('checkin_equipment', user_id=user_id, equipment_id=item.id) }}">
                                 <button type="submit">Check In</button>
                             </form>
                         </td>
-
                         <td>
                             {% if is_admin %}
                                 <a href="{{ url_for('remove_equipment', user_id=user_id, id=item.id) }}">Remove</a>
