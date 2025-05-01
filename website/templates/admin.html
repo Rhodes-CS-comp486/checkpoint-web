@@ -24,7 +24,7 @@
                     <td>{{ 'Yes' if user.admin else 'No' }}</td>
                     <td>
                         {% if username != 'admin' %}
-                            <form method="POST" style="display: inline;">
+                            <form method="POST">
                                 <input type="hidden" name="username" value="{{ username }}">
                                 <input type="hidden" name="action" value="{{ 'demote' if user.admin else 'promote' }}">
                                 <button type="submit">
