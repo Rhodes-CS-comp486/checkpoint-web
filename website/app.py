@@ -317,56 +317,99 @@ def generate_pdf(user_id):
         return "Unauthorized", 403
 
     report_type = request.form.get('report_type')
-    selected_value = request.form.get('selected_value', '').strip()
-
-    borrows = get_all_borrows()
+    selected_value = request.form.get('selected_value')
     report_data = []
 
-    if report_type == "user":
-        report_data = [
-            (b["username"], b["item_id"], b["date_borrowed"], "Returned" if b.get("returned") else "Borrowed")
-            for b in borrows if b.get("username", "").lower() == selected_value.lower()
-        ]
-    elif report_type == "equipment":
-        report_data = [
-            (b["username"], b["item_id"], b["date_borrowed"], "Returned" if b.get("returned") else "Borrowed")
-            for b in borrows if b.get("item_id", "").lower() == selected_value.lower()
-        ]
-    elif report_type == "all_users":
-        report_data = [
-            (b["username"], b["item_id"], b["date_borrowed"], "Returned" if b.get("returned") else "Borrowed")
-            for b in borrows
-        ]
+    headers = {"Authorization": f"Bearer {session['token']}"}
 
-    # Generate PDF
+    # Case 1: History for a specific user
+    if report_type == "user":
+        all_users = get_all_users()
+        target_user = next((u for u in all_users if u["username"] == selected_value), None)
+        if not target_user:
+            return f"No such user: {selected_value}", 404
+        user_id_lookup = target_user["user_id"]
+
+        borrows = get_all_borrows()
+        for record in borrows:
+            if record.get("user_id") == user_id_lookup:
+                item_id = record.get("item_id")
+                item = requests.get(f"{API_BASE_URL}/items/{item_id}", headers=headers).json() if item_id else {}
+                item_name = item.get("name", "Unknown Equipment")
+
+                report_data.append((
+                    target_user["username"],
+                    item_name,
+                    record.get("date_borrowed", "N/A"),
+                    "Returned" if record.get("returned") else "Borrowed"
+                ))
+
+    # Case 2: History for a specific equipment item
+    elif report_type == "equipment":
+        print("[DEBUG] Looking up equipment:", selected_value)
+        item_resp = requests.get(f"{API_BASE_URL}/items/filter", headers=headers, params={"name": selected_value})
+        item_data = item_resp.json() if item_resp.status_code == 200 else []
+
+        if not item_data:
+            return f"No equipment found with name: {selected_value}", 404
+
+        target_id = item_data[0].get("id")  # Assume exact match on name
+        all_borrows = get_all_borrows()
+        for record in all_borrows:
+            if record.get("item_id") == target_id:
+                report_data.append((
+                    record.get("username", "Unknown"),
+                    selected_value,
+                    record.get("date_borrowed", "N/A"),
+                    "Returned" if record.get("returned") else "Borrowed"
+                ))
+
+    # Case 3: All user transactions
+    elif report_type == "all_users":
+        all_borrows = get_all_borrows()
+        for record in all_borrows:
+            item_id = record.get("item_id")
+            item = requests.get(f"{API_BASE_URL}/items/{item_id}", headers=headers).json() if item_id else {}
+            item_name = item.get("name", "Unknown Equipment")
+
+            report_data.append((
+                record.get("username", "Unknown"),
+                item_name,
+                record.get("date_borrowed", "N/A"),
+                "Returned" if record.get("returned") else "Borrowed"
+            ))
+
+    # Start PDF generation
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
-
     pdf.setFont("Helvetica-Bold", 14)
     pdf.drawString(200, height - 40, "Usage History Report")
     pdf.setFont("Helvetica", 10)
 
     y = height - 80
     pdf.drawString(50, y, "User")
-    pdf.drawString(150, y, "Equipment")
-    pdf.drawString(300, y, "Date")
-    pdf.drawString(400, y, "Status")
+    pdf.drawString(180, y, "Equipment")
+    pdf.drawString(280, y, "Date")
+    pdf.drawString(430, y, "Status")
     y -= 20
 
-    for user, equipment, date, status in report_data:
-        if y < 50:
-            pdf.showPage()
-            y = height - 50
-        pdf.drawString(50, y, user)
-        pdf.drawString(150, y, equipment)
-        pdf.drawString(300, y, date)
-        pdf.drawString(400, y, status)
-        y -= 15
+    if not report_data:
+        pdf.drawString(50, y, "No data found for the selected report.")
+    else:
+        for user, equip, date, status in report_data:
+            if y < 50:
+                pdf.showPage()
+                y = height - 50
+                pdf.setFont("Helvetica", 10)
+            pdf.drawString(50, y, user)
+            pdf.drawString(180, y, equip)
+            pdf.drawString(280, y, date)
+            pdf.drawString(430, y, status)
+            y -= 15
 
     pdf.save()
     buffer.seek(0)
-
     return send_file(buffer, as_attachment=True, download_name="usage_report.pdf", mimetype='application/pdf')
 
 @app.route('/add_equipment/<user_id>', methods=['GET', 'POST'])

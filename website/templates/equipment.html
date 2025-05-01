@@ -14,7 +14,7 @@
     <p><strong>Availability:</strong><span>{{ 'available' if equipment.availability else 'unavailable' }}</span></p>
     <!--<p><strong>Quality:</strong> {{ equipment.quality }}</p> -->
 
-    <h3>Past Checkouts & Reservations</h3>
+    <h3>Past Checkouts</h3>
     <table border="1">
         <thead>
             <tr>
@@ -34,7 +34,7 @@
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="3">No past checkouts or reservations.</td>
+                    <td colspan="3">No past checkouts.</td>
                 </tr>
             {% endif %}
         </tbody>
