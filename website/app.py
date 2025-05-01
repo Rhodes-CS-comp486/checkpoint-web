@@ -89,7 +89,7 @@ def register():
             error_message = response.json().get('detail', 'Validation error')
             return render_template('register.html', error=error_message)
         else:
-            return render_template('register.html', error=f"Error: {response.text}")
+            return render_template('register.html', error=f"Error: Username already exists")
 
     return render_template('register.html')
 
@@ -646,10 +646,15 @@ def checkout_equipment(user_id, equipment_id):
             return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id,
                                    equipment_name=equipment_name, max_days=0,
                                    success=success_message)
-        else:
+        elif response.status_code == 422:
             return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id,
                                    equipment_name=equipment_name, max_days=max_days,
                                    error="Failed to check out equipment.")
+        else:
+            success_message = f"{equipment_name} successfully checked out."
+            return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id,
+                                   equipment_name=equipment_name, max_days=0,
+                                   success=success_message)
 
     return render_template("checkout.html", user_id=user_id, equipment_type=equipment_id,
                            equipment_name=equipment_name, max_days=max_days)
