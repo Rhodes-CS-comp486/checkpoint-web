@@ -132,7 +132,7 @@ def login():
             return redirect(url_for('dashboard', user_id=session['user_id']))
 
         except requests.exceptions.RequestException as e:
-            return render_template('login.html', error=f"Login failed: {str(e)}")
+            return render_template('login.html', error=f"Login failed: account unavailable or invalid credentials")
 
     return render_template('login.html')
 
