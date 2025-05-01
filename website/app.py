@@ -11,44 +11,41 @@ app = Flask(__name__)
 
 # Hardcoded user data
 login_database = {
-    "user1": {"id": str(uuid.uuid4()), "username": "user1", "password": "password123", "admin": False},
-    "user2": {"id": str(uuid.uuid4()), "username": "user2", "password": "mypassword", "admin": False},
-    "user3": {"id": str(uuid.uuid4()), "username": "user3", "password": "12345", "admin": False},
-    "admin": {"id": str(uuid.uuid4()), "username": "admin", "password": "admin", "admin": True},
+    "jhall": {"id": str(uuid.uuid4()), "username": "jhall", "password": "123", "admin": False},
+    "Demo": {"id": str(uuid.uuid4()), "username": "Demo", "password": "mypassword", "admin": False},
+    "egantulga": {"id": str(uuid.uuid4()), "username": "egantulga", "password": "12345", "admin": False},
+    "dzhanbyrshy": {"id": str(uuid.uuid4()), "username": "dzhanbyrshy", "password": "admin", "admin": True},
 }
 
 # Equipment data with boolean availability
 equipment_database = [
-    {'id': str(uuid.uuid4()), 'type': 'computer1', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '10'},
-    {'id': str(uuid.uuid4()), 'type': 'computer2', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '9'},
-    {'id': str(uuid.uuid4()), 'type': 'computer3', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '8'},
+    {'id': str(uuid.uuid4()), 'type': 'Whiteboard', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '10'},
+    {'id': str(uuid.uuid4()), 'type': 'Camera', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '9'},
+    {'id': str(uuid.uuid4()), 'type': 'robot', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '8'},
 ]
 
 # sample equipment history data
 equipment_history = {
-    "computer1": [
-        {"user": "user1", "date": "2024-01-15", "status": "Checked Out"},
-        {"user": "user1", "date": "2024-01-20", "status": "Returned to Inventory"},
-        {"user": "user2", "date": "2024-02-10", "status": "Checked Out"},
-        {"user": "user2", "date": "2024-02-15", "status": "Returned to Inventory"},
-        {"user": "user3", "date": "2024-03-20", "status": "Checked Out"},
-        {"user": "user3", "date": "2024-03-25", "status": "Returned to Inventory"}
+    "Whiteboard": [
+        {"user": "dzhanbryshy", "date": "2025-05-01T02:58:06.703610", "status": "Borrowed"},
+        {"user": "dzhanbryshy", "date": "2025-05-01T02:57:41.983013", "status": "Borrowed"},
+        {"user": "Demo", "date": "2025-05-01T02:46:52.267379", "status": "Borrowed"},
+        {"user": "Demo", "date": "2025-05-01T02:45:53.129008", "status": "Borrowed"},
+        {"user": "Demo", "date": "2025-05-01T02:45:40.974901", "status": "Borrowed"},
+        {"user": "dzhanbryshy", "date": "2025-04-28T22:05:02.738585", "status": "Borrowed"},
+        {"user": "dzhanbryshy", "date": "2025-04-28T22:04:10.207562", "status": "Borrowed"},
+        {"user": "dzhanbryshy", "date": "2025-04-28T21:43:31.719815", "status": "Borrowed"},
+        {"user": "dzhanbryshy", "date": "2025-04-28T21:41:07.639958", "status": "Borrowed"}
     ],
-    "computer2": [
-        {"user": "user1", "date": "2024-01-15", "status": "Checked Out"},
-        {"user": "user1", "date": "2024-01-20", "status": "Returned to Inventory"},
-        {"user": "user2", "date": "2024-02-10", "status": "Checked Out"},
-        {"user": "user2", "date": "2024-02-15", "status": "Returned to Inventory"},
-        {"user": "user3", "date": "2024-03-20", "status": "Checked Out"},
-        {"user": "user3", "date": "2024-03-25", "status": "Returned to Inventory"}
+    "Camera": [
+        {"user": "dzhanbryshy", "date": "2025-04-29T18:25:06.445340", "status": "Borrowed"},
+        {"user": "dzhanbryshy", "date": "2025-04-28T22:04:02.822120", "status": "Borrowed"},
+        {"user": "dzhanbryshy", "date": "2025-04-28T21:41:15.529149", "status": "Borrowed"},
+        {"user": "dzhanbryshy", "date": "2025-04-28T21:40:00.432554", "status": "Borrowed"}
     ],
-    "computer3": [
-        {"user": "user1", "date": "2024-01-15", "status": "Checked Out"},
-        {"user": "user1", "date": "2024-01-20", "status": "Returned to Inventory"},
-        {"user": "user2", "date": "2024-02-10", "status": "Checked Out"},
-        {"user": "user2", "date": "2024-02-15", "status": "Returned to Inventory"},
-        {"user": "user3", "date": "2024-03-20", "status": "Checked Out"},
-        {"user": "user3", "date": "2024-03-25", "status": "Returned to Inventory"}
+    "robot": [
+        {"user": "dzhanbryshy", "date": "2025-04-29T21:15:58.655656", "status": "Borrowed"},
+        {"user": "dzhanbryshy", "date": "2025-04-29T02:01:37.288797", "status": "Borrowed"}
     ]
 }
 
