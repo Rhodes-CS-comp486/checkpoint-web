@@ -19,9 +19,9 @@ login_database = {
 
 # Equipment data with boolean availability
 equipment_database = [
-    {'id': str(uuid.uuid4()), 'type': 'Whiteboard', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '10'},
-    {'id': str(uuid.uuid4()), 'type': 'Camera', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '9'},
-    {'id': str(uuid.uuid4()), 'type': 'robot', 'description': 'Dell Latitude 7400', 'availability': True, 'quality': '8'},
+    {'id': str(uuid.uuid4()), 'type': 'Whiteboard', 'description': 'Magnetic Whiteboard', 'availability': True, 'quality': '10'},
+    {'id': str(uuid.uuid4()), 'type': 'Camera', 'description': '', 'availability': True, 'quality': '9'},
+    {'id': str(uuid.uuid4()), 'type': 'robot', 'description': '', 'availability': True, 'quality': '8'},
 ]
 
 # sample equipment history data
