@@ -18,7 +18,7 @@
                 <th>Equipment History</th>
                 <th>Date</th>
                 <th>Status</th>
-                <th>Current Availability</th>
+                <!--<th>Current Availability</th>-->
                 <!--<th>Reserve</th>-->
             </tr>
         </thead>
@@ -32,7 +32,7 @@
                         </td>
                         <td>{{ record.date }}</td>
                         <td>{{ record.status | title }}</td>
-                        <td>{{ 'available' if record.availability else 'unavailable' }}</td>
+                        <!--<td>{{ 'available' if record.availability else 'unavailable' }}</td>-->
                         <!--<td><a href="{{ url_for('reservations', user_id=user_id) }}">Make a Reservation</a></td>-->
                     </tr>
                 {% endfor %}
