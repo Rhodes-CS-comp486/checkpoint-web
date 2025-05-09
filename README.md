@@ -103,4 +103,4 @@ python .\app.py
 
 ---
 
-The counterpart project to Checkpoint-Core is the web app, Checkpoint-Web. You can access the repository for Checkpoint-Web at https://github.com/Rhodes-CS-comp486/checkpoint-core
+The counterpart project to Checkpoint-Web is the backend service, Checkpoint-Core. You can access the repository for Checkpoint-Core at https://github.com/Rhodes-CS-comp486/checkpoint-core
